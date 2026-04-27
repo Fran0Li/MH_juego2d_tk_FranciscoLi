@@ -40,3 +40,32 @@ def detener_key(event):#Funcion para detener el interruptor
         teclas["Right"] = False #apaga interruptor de derecha
     elif k in ["Space", "w", "W"]:# si fue salto, arriba
         teclas["Space"] = False # apaga interruptor de salto
+
+#Lógica del mov!!
+
+def mover_hunter():
+    #Movimiento horizontal
+    if  teclas["Left"]:#Si se presiona esta tecla
+        hunter[0] -= VELOCIDAD_MOV# se mueve a la izq a la v de mov
+    if teclas["Right"]:#Si se presiona esta teclas
+        hunter[0] += VELOCIDAD_MOV# se mueve a la derecha a la v de mov
+    
+    #Lógica de salto
+    if teclas["Space"] and hunter[3]:
+        hunter[2] = POTENCIA_JUMP # Velocidad vertical hacia arriba
+        hunter[3] = False #desactiva el estado de que está en el suelo
+
+    #Aplicación de la Física!
+    hunter[2] += GRAVEDAD # la gravedad jala hacia abajo sumando a la velocidad
+    hunter[1] += hunter[2] # la posición Y cambia según la velocidad vertical que se acumule
+
+    # Colisión con piso
+    PISO_ALT = ALTO_VP - 20 #definición  de donde empieza el piso
+    ALTO_HUNTER = 40 #Tamaño vertical del personaje
+
+    # Si la parte baja de hunter pasa el límite del piso
+    if hunter[1] + ALTO_HUNTER >= PISO_ALT:
+        hunter[1] = PISO_ALT - ALTO_HUNTER # lo coloca encima del piso
+        hunter[2] = 0 #devuelve la velocidad de caida a cero
+        hunter[3] = True #marca que ahora está tocando el suelo
+
