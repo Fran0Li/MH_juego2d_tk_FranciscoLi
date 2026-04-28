@@ -88,12 +88,9 @@ def mover_hunter():
                 #Si hunter esta alineado horizontalmente
                 if hunter[0] + ANCHO_HUNTER >= px and hunter[0] < px + p_ancho:
                     #Si se cumplen las anteriores hay colisión!!!
-                    hunter[1]
-    # Si la parte baja de hunter pasa el límite del piso
-    if hunter[1] + ALTO_HUNTER >= PISO_ALT:
-        hunter[1] = PISO_ALT - ALTO_HUNTER # lo coloca encima del piso
-        hunter[2] = 0 #devuelve la velocidad de caida a cero
-        hunter[3] = True #marca que ahora está tocando el suelo
+                    hunter[1] = py - ALT_HUNTER # Se transporta justo arriba del bloque para evitar problema de hundimiento
+                    hunter[2] = 0 # se pone la velocidad vertical en 0 para que deje de caer
+                    hunter[3] = True #activa interruptor de suelo para que se pueda saltar otra vez
 
 #Animacion en ventana
 
@@ -116,8 +113,15 @@ canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#222222")#Dimens
 canvas.pack()#Coloca el canvas dentro de la ventana
 #Dibuja un rectángulo que representa el suelo
 canvas.create_rectangle(0, ALTO_VP-20, ANCHO_VP, ALTO_VP, fill="green")
+#Dibujar plataformas
+for p in plataformas:
+    #Dibujar cada una de las plataformas gracias al ciclo. se usan los datos de "Plataformas"
+    # p[0] = x, p[1] = y, p[2] = ancho, p[3] = alto
+    # se guarda el id en p[4]  para que el sistema de colisiones sepa que es cada dato
+    p[4] = canvas.create_rectangle(p[0], p[1], p[0] + p[2], p[1] + p[3], fill="orange", outline="White")#Asigna también colores
+
 #Dibujar a hunter(jugador)
-hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + 30, hunter [1] + 40, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
+hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + ANCHO_HUNTER, hunter [1] + ALT_HUNTER, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
 
 #Binds, spn la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
 ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
