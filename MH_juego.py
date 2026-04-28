@@ -96,7 +96,12 @@ def mover_hunter():
         hunter[0] = 0
     elif hunter[0] + ANCHO_HUNTER > ANCHO_VP:# si la x + el ancho de hunter superan el ancho de ventana
         hunter[0] = ANCHO_VP - ANCHO_HUNTER # se frena a la derecha
-    
+    #Lógica reset por caídaa (por si se implementan huecos)
+    if hunter[1] > ALTO_VP:
+        hunter[0] = 100 # De nuevo a la x inicial
+        hunter[1] = 100 # De nuevo a la y inicial
+        hunter[2] = 0 #Su velocidad de caída se vuelve a 0 para que no siga sumando la vel vertical
+        hunter[3] = False # empieza en el aire
 
 #Animacion en ventana
 
