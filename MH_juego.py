@@ -24,11 +24,12 @@ hunter = [100, 100, 0, False, None]
 
 #Lista de plataformas
 #cada lista tiene: [x, y, ancho, alto, ID]
-plataformas = [[0, 580, 800, 20, None, "brown"], [300, 450, 200, 20, None, "orange"], [85, 350, 150, 20, None, "orange"], [550, 300, 150, 20, None, "orange"]]
-#La primera lista es el suelo 
-#La segunda, plataforma 1
-#La tercera, plataforma 2
-#La cuarta, plataforma 3
+plataformas = [[0, 580, 300, 20, None, "brown"], [500, 580, 300, 20, None, "brown"], [300, 450, 200, 20, None, "orange"], [85, 350, 150, 20, None, "orange"], [550, 300, 150, 20, None, "orange"]]
+#La primera lista es el suelo pt1 
+# La segunda es la otra parte del suelo para crear un hueco 
+#La tercera, plataforma 1
+#La cuarta, plataforma 2
+#La quinta, plataforma 3
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False}
@@ -122,9 +123,7 @@ ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño d
 # Area donde se dibujarán los rectángulos
 canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#2B122C")#Dimensiones y color
 canvas.pack()#Coloca el canvas dentro de la ventana
-#Dibuja un rectángulo que representa el suelo
-canvas.create_rectangle(0, ALTO_VP-20, ANCHO_VP, ALTO_VP, fill="green")
-#Dibujar plataformas
+#Dibujar plataformas (incluye suelo)
 for p in plataformas:
     #Se usa p[5] para el color fill
     #Dibujar cada una de las plataformas gracias al ciclo. se usan los datos de "Plataformas"
