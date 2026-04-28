@@ -91,6 +91,12 @@ def mover_hunter():
                     hunter[1] = py - ALT_HUNTER # Se transporta justo arriba del bloque para evitar problema de hundimiento
                     hunter[2] = 0 # se pone la velocidad vertical en 0 para que deje de caer
                     hunter[3] = True #activa interruptor de suelo para que se pueda saltar otra vez
+    #Límites laterales para que no desaparezca al salirse
+    if hunter[0] < 0:# si la x es menor a 0, se frena en el borde izquierdo
+        hunter[0] = 0
+    elif hunter[0] + ANCHO_HUNTER > ANCHO_VP:# si la x + el ancho de hunter superan el ancho de ventana
+        hunter[0] = ANCHO_VP - ANCHO_HUNTER # se frena a la derecha
+    
 
 #Animacion en ventana
 
