@@ -8,6 +8,9 @@ ALTO_VP = 600 #alto de la ventana prrincipal
 GRAVEDAD = 0.8#valor de gravedad
 POTENCIA_JUMP = -15 #potencia del salto, es negativo porque arriba es restar en Y
 VELOCIDAD_MOV = 6 #velocidad de movimiento
+#Tamaño Hunter
+ANCHO_HUNTER = 30
+ALT_HUNTER = 40
 
 #Game state
 
@@ -18,6 +21,14 @@ hunter = [100, 100, 0, False, None]
 #i[2]: velocidad vertical (vy)
 #i[3]: boolean sobre suelo 
 #i[4]: identidad del dibuj en el Canvas (ID)
+
+#Lista de plataformas
+#cada lista tiene: [x, y, ancho, alto, ID]
+plataformas = [[0, 580, 800, 20, None], [300, 450, 200, 20, None], [100, 350, 150, 20, None], [550, 300, 150, 20, None]]
+#La primera lista es el suelo 
+#La segunda, plataforma 1
+#La tercera, plataforma 2
+#La cuarta, plataforma 3
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False}
@@ -41,7 +52,7 @@ def detener_key(event):#Funcion para detener el interruptor
     elif k in ["space", "w", "W"]:# si fue salto, arriba
         teclas["space"] = False # apaga interruptor de salto
 
-#Lógica del mov!!
+#Lógica del mov!! y colisiones
 
 def mover_hunter():
     #Movimiento horizontal
@@ -59,10 +70,25 @@ def mover_hunter():
     hunter[2] += GRAVEDAD # la gravedad jala hacia abajo sumando a la velocidad
     hunter[1] += hunter[2] # la posición Y cambia según la velocidad vertical que se acumule
 
-    # Colisión con piso
-    PISO_ALT = ALTO_VP - 20 #definición  de donde empieza el piso
-    ALTO_HUNTER = 40 #Tamaño vertical del personaje
+    # Colisiónes en plataformas y piso, cambio para que sea posible
+    hunter[3] = False # Se asume que esta en el aire, que está cayendo
+    # si toca una plataforma o suelo, cambiará a True dentro del ciclo
 
+    #Se recorre la lista de plataformas una a la vez
+    for p in plataformas:
+        #Se extraen los datos de las plataformas
+        px = p[0] #posición x del bloque
+        py = p[1] #posición y del blque, ahí empieza el tope
+        p_ancho = p[2] #ancho del bloque
+        p_alto = p[3] #alto del bloque
+        #si hunter está bajando
+        if hunter[2] >= 0: # evita que hunter se quede pegado al techo si salta
+            #Si los pies de hunter están en la plataforma
+            if hunter[1] + ALT_HUNTER >= py and hunter[1] + ALT_HUNTER <= py + p_alto: # Revisamos si y + alto, es mayor que el tope del bloque y menor que el fondo del mismo
+                #Si hunter esta alineado horizontalmente
+                if hunter[0] + ANCHO_HUNTER >= px and hunter[0] < px + p_ancho:
+                    #Si se cumplen las anteriores hay colisión!!!
+                    hunter[1]
     # Si la parte baja de hunter pasa el límite del piso
     if hunter[1] + ALTO_HUNTER >= PISO_ALT:
         hunter[1] = PISO_ALT - ALTO_HUNTER # lo coloca encima del piso
