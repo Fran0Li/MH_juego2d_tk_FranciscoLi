@@ -24,7 +24,7 @@ hunter = [100, 100, 0, False, None]
 
 #Lista de plataformas
 #cada lista tiene: [x, y, ancho, alto, ID]
-plataformas = [[0, 580, 800, 20, None], [300, 450, 200, 20, None], [100, 350, 150, 20, None], [550, 300, 150, 20, None]]
+plataformas = [[0, 580, 800, 20, None, "brown"], [300, 450, 200, 20, None, "orange"], [85, 350, 150, 20, None, "orange"], [550, 300, 150, 20, None, "orange"]]
 #La primera lista es el suelo 
 #La segunda, plataforma 1
 #La tercera, plataforma 2
@@ -76,7 +76,7 @@ def mover_hunter():
 
     #Se recorre la lista de plataformas una a la vez
     for p in plataformas:
-        #Se extraen los datos de las plataformas
+        #Se extraen solo los primeros 4 datos de las plataformas, que son los que se utilizarán
         px = p[0] #posición x del bloque
         py = p[1] #posición y del blque, ahí empieza el tope
         p_ancho = p[2] #ancho del bloque
@@ -109,16 +109,17 @@ ventana.title("MH 2026_FranLi") #Título de la ventana
 ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño de ventana
 
 # Area donde se dibujarán los rectángulos
-canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#222222")#Dimensiones y color
+canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#2B122C")#Dimensiones y color
 canvas.pack()#Coloca el canvas dentro de la ventana
 #Dibuja un rectángulo que representa el suelo
 canvas.create_rectangle(0, ALTO_VP-20, ANCHO_VP, ALTO_VP, fill="green")
 #Dibujar plataformas
 for p in plataformas:
+    #Se usa p[5] para el color fill
     #Dibujar cada una de las plataformas gracias al ciclo. se usan los datos de "Plataformas"
     # p[0] = x, p[1] = y, p[2] = ancho, p[3] = alto
     # se guarda el id en p[4]  para que el sistema de colisiones sepa que es cada dato
-    p[4] = canvas.create_rectangle(p[0], p[1], p[0] + p[2], p[1] + p[3], fill="orange", outline="White")#Asigna también colores
+    p[4] = canvas.create_rectangle(p[0], p[1], p[0] + p[2], p[1] + p[3], fill= p[5], outline="White")#Asigna también colores
 
 #Dibujar a hunter(jugador)
 hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + ANCHO_HUNTER, hunter [1] + ALT_HUNTER, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
