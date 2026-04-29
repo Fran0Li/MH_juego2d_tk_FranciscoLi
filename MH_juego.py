@@ -8,8 +8,8 @@ ALTO_VP = 600 #alto de la ventana prrincipal
 GRAVEDAD = 0.8#valor de gravedad
 POTENCIA_JUMP = -15 #potencia del salto, es negativo porque arriba es restar en Y
 VELOCIDAD_MOV = 6 #velocidad de movimiento
-#Tamaño Hunter
-ANCHO_HUNTER = 30
+#Dimensiones Hunter
+ANCHO_HUNTER = 30 
 ALT_HUNTER = 40
 
 #Game state
@@ -30,6 +30,10 @@ plataformas = [[0, 580, 300, 20, None, "brown"], [500, 580, 300, 20, None, "brow
 #La tercera, plataforma 1
 #La cuarta, plataforma 2
 #La quinta, plataforma 3
+
+#info de la meta
+#en la lista se tiene: [ x, y, ancho, alto, id]
+meta = [650, 250, 30, 30, None]
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False}
@@ -103,6 +107,15 @@ def mover_hunter():
         hunter[1] = 100 # De nuevo a la y inicial
         hunter[2] = 0 #Su velocidad de caída se vuelve a 0 para que no siga sumando la vel vertical
         hunter[3] = False # empieza en el aire
+    #Colisión con meta
+    if (hunter [0] < meta[0] + meta[2] and hunter[0] + 30 > meta[0] and
+        hunter [1] < meta[1] + meta[3]  and hunter[1] + 40 > meta[1]):# Revisa si el rectangulo de hunter y la meta se tocan
+        print("NIVEL COMPLETADOO:)")# aparece en la consola
+        #Al ganar, hunter vuelve al inicio
+        hunter[0] = 100#coordenada en x
+        hunter[1] = 100#coordenada en y
+        hunter[2] = 0#velocidad vertical se reinicia
+
 
 #Animacion en ventana
 
@@ -120,6 +133,7 @@ ventana = tk.Tk()#crea base
 ventana.title("MH 2026_FranLi") #Título de la ventana
 ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño de ventana
 
+
 # Area donde se dibujarán los rectángulos
 canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#2B122C")#Dimensiones y color
 canvas.pack()#Coloca el canvas dentro de la ventana
@@ -133,6 +147,9 @@ for p in plataformas:
 
 #Dibujar a hunter(jugador)
 hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + ANCHO_HUNTER, hunter [1] + ALT_HUNTER, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
+
+#Dibujar la meta
+meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow" )
 
 #Binds, spn la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
 ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
