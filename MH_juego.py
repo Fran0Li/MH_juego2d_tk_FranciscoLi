@@ -25,15 +25,39 @@ hunter = [100, 100, 0, False, None]
 
 #Lista de plataformas
 #cada lista tiene: [x, y, ancho, alto, ID, color]
-plataformas = [[0, 580, 300, 20, None, "brown"], [500, 580, 300, 20, None, "brown"], [300, 450, 200, 20, None, "orange"], [85, 350, 150, 20, None, "orange"], [550, 300, 150, 20, None, "orange"]]
+#plataformas = [[0, 580, 300, 20, None, "brown"], [500, 580, 300, 20, None, "brown"], [300, 450, 200, 20, None, "orange"], [85, 350, 150, 20, None, "orange"], [550, 300, 150, 20, None, "orange"]]
 #La primera lista es el suelo pt1 
-# La segunda es la otra parte del suelo para crear un hueco 
+# La segunda es la otra parte del suelo para crea#77581r un hueco 
 #La tercera, plataforma 1
 #La cuarta, plataforma 2
 #La quinta, plataforma 3
 #Lista de escaleras: [x, y, ancho, alto, ID, color]
-escaleras = [[300, 350, 40, 230, None, "#7F611F"]]
+#escaleras = [[300, 350, 40, 230, None, "#7F611F"]]
+pantallas = {
+    1: {
+        "plataformas": [# plataformas de la primer pantalla
+            [0, 580, 300, 20, None, "brown"], 
+            [500, 580, 300, 20, None, "brown"], 
+            [300, 450, 200, 20, None, "orange"]
+        ],
+        "escaleras": [ # lista de escaleras de la primer pantalla
+            [350, 350, 40, 230, None, "#7F611F"] # Escalera del nivel 1
+        ]
+    },
+    2: {
+        "plataformas": [ #Plataformas de la segunda pantalla
+            [0, 580, 800, 20, None, "green"], 
+            [200, 300, 400, 20, None, "blue"]
+        ],
+        "escaleras": [ # lista de las escaleras de la segunda pantalla
+            [100, 200, 40, 380, None, "#7F611F"], # Escalera diferente para nivel 2
+            [600, 200, 40, 380, None, "#7F611F"]  
+            ]}}
 
+#Para el inicio
+game_state = {"pantalla_actual": 1}
+plataformas = pantallas[game_state["pantalla_actual"]["plataformas"]]#se extrae la lista segun pantalla actual
+escaleras = pantallas[game_state["pantalla_actual"]["escaleras"]]#Lo mismo pero con la lista de escaleras
 #info de la meta
 #en la lista se tiene: [ x, y, ancho, alto, id]
 meta = [650, 250, 30, 30, None]
@@ -64,6 +88,27 @@ def detener_key(event):#Funcion para detener el interruptor
     elif k in ["Down", "s", "S"]:# si fue abajo, baja escalera
         teclas["Down"] = False# apaga interruptor de bajar
 
+#Función para cargar mas pantallas en el nivel predeterminado
+def cargar_npantalla(num):
+    global plataformas, escaleras
+
+    #Limpiar canvas
+    for p in plataformas:
+        canvas.delete(p[4])
+    for e in escaleras:
+        canvas.delete(e[4])
+    #nuevos datos
+    plataformas  = pantallas[num]["plataformas"]
+    escaleras = pantallas[num]["escaleras"]
+    #se dibujan las nuevas plataformas y escaleras con ciclos
+    for p in plataformas:
+        p[4] = canvas.create_rectangle(p[0], p[1], p[0]+p[2], p[1]+p[3], fill=p[5], outline="white")
+    for e in escaleras:
+        e[4] = canvas.create_rectangle(e[0], e[1], e[0]+e[2], e[1]+e[3], fill=e[5], outline="white", stipple="gray50")
+    if num == 2:# control de la meta, se esconde en una pantalla pero se muestra en la otra
+        canvas.itemconfig(meta[4], state="normal")
+    else:
+        canvas.itenconfig(meta[4], state="hidden")
 #Lógica del mov!! y colisiones
 
 def mover_hunter():
