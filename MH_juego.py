@@ -56,8 +56,9 @@ pantallas = {
 
 #Para el inicio
 game_state = {"pantalla_actual": 1}
-plataformas = pantallas[game_state["pantalla_actual"]["plataformas"]]#se extrae la lista segun pantalla actual
-escaleras = pantallas[game_state["pantalla_actual"]["escaleras"]]#Lo mismo pero con la lista de escaleras
+# se accede primero al numero de pantalla y despues a los datos de la misma
+plataformas = pantallas[game_state["pantalla_actual"]]["plataformas"]#se extrae la lista segun pantalla actual
+escaleras = pantallas[game_state["pantalla_actual"]]["escaleras"]#Lo mismo pero con la lista de escaleras
 #info de la meta
 #en la lista se tiene: [ x, y, ancho, alto, id]
 meta = [650, 250, 30, 30, None]
@@ -106,9 +107,9 @@ def cargar_npantalla(num):
     for e in escaleras:
         e[4] = canvas.create_rectangle(e[0], e[1], e[0]+e[2], e[1]+e[3], fill=e[5], outline="white", stipple="gray50")
     if num == 2:# control de la meta, se esconde en una pantalla pero se muestra en la otra
-        canvas.itemconfig(meta[4], state="normal")
+        canvas.itemconfig(meta[4], state="normal") # se vuelve visible en la segunda pantalla
     else:
-        canvas.itenconfig(meta[4], state="hidden")
+        canvas.itemconfig(meta[4], state="hidden")# oculta en la primer pantalla
 #Lógica del mov!! y colisiones
 
 def mover_hunter():
@@ -132,13 +133,21 @@ def mover_hunter():
             hunter[1] + ALT_HUNTER > e[1] and hunter[1] < e[1] + e[3]):
             en_laescalera = True
             break
-         
-    if en_laescalera:#Si está en la escalera
-            hunter[2] = 0 # se pone la velocidad vertical en 0 para que no caiga
-            if teclas["space"]: #Con W o Espacio sube
-                hunter [1] -= VELOCIDAD_MOV
-            if teclas["Down"]: #Con flecha hacia abajo o S
-                hunter[1] += VELOCIDAD_MOV
+    if en_laescalera:
+        hunter[2] = 0 # Detiene gravedad para que no se caiga
+        
+        # dirección + espacio, salta.
+        # Si se pulsa espacio da un impulso, si hay direccion salta
+        if teclas["space"] and (teclas["Left"] or teclas["Right"]):
+            hunter[2] = POTENCIA_JUMP # Aplicamos fuerza de salto
+            hunter[3] = False         # Ya no está "en el suelo/escalera"
+            en_laescalera = False     # Fuerza la salida del estado escalera
+        elif teclas["space"]:#para solo trepar
+            hunter[1] -= VELOCIDAD_MOV
+        # bajar de la esclaera 
+        if teclas["Down"]: 
+            hunter[1] += VELOCIDAD_MOV
+
     else:    
         #se ejecuta si no está en las escaleras
         hunter[2] += GRAVEDAD # la gravedad jala hacia abajo sumando a la velocidad
@@ -169,10 +178,17 @@ def mover_hunter():
     #Lógica de cambio de zona paara un mapa extendido 
     if hunter[0] > ANCHO_VP:
         hunter[0] = 10# teletransporta a huntee al inicio de la siguient pantalla
-        canvas.configure(bg="#1A0A1D")# Cambio en el color para que se note el avance
-        print("Cambio de zona")
+        # Se aumenta el contador de pantalla para pasar a la segunda
+        game_state["pantalla_actual"] += 1
+        
+        if game_state["pantalla_actual"] in pantallas:# si la pantalla existe, se carga
+            cargar_npantalla(game_state["pantalla_actual"])
+            canvas.configure(bg="#000000")
+            print(f"Cambio de zona: {game_state['pantalla_actual']}")
+
     elif hunter [0] < 0:#  se frena en el borde 0 por su x
         hunter[0] = 0#frena
+
     #Lógica reset por caídaa (por si se implementan huecos)
     if hunter[1] > ALTO_VP:
         hunter[0] = 100 # De nuevo a la x inicial
@@ -225,7 +241,7 @@ for e in escaleras:
 hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + ANCHO_HUNTER, hunter [1] + ALT_HUNTER, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
 
 #Dibujar la meta
-meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow" )
+meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow", state="hidden")
 
 #Binds, spn la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
 ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
