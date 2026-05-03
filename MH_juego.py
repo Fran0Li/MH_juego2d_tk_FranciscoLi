@@ -32,7 +32,7 @@ plataformas = [[0, 580, 300, 20, None, "brown"], [500, 580, 300, 20, None, "brow
 #La cuarta, plataforma 2
 #La quinta, plataforma 3
 #Lista de escaleras: [x, y, ancho, alto, ID, color]
-escaleras = [[350, 350, 40, 230, None, "#7F611F"]]
+escaleras = [[300, 350, 40, 230, None, "#7F611F"]]
 
 #info de la meta
 #en la lista se tiene: [ x, y, ancho, alto, id]
@@ -121,10 +121,13 @@ def mover_hunter():
                     hunter[2] = 0 # se pone la velocidad vertical en 0 para que deje de caer
                     hunter[3] = True #activa interruptor de suelo para que se pueda saltar otra vez
     #Límites laterales para que no desaparezca al salirse
-    if hunter[0] < 0:# si la x es menor a 0, se frena en el borde izquierdo
-        hunter[0] = 0
-    elif hunter[0] + ANCHO_HUNTER > ANCHO_VP:# si la x + el ancho de hunter superan el ancho de ventana
-        hunter[0] = ANCHO_VP - ANCHO_HUNTER # se frena a la derecha
+    #Lógica de cambio de zona paara un mapa extendido 
+    if hunter[0] > ANCHO_VP:
+        hunter[0] = 10# teletransporta a huntee al inicio de la siguient pantalla
+        canvas.configure(bg="#1A0A1D")# Cambio en el color para que se note el avance
+        print("Cambio de zona")
+    elif hunter [0] < 0:#  se frena en el borde 0 por su x
+        hunter[0] = 0#frena
     #Lógica reset por caídaa (por si se implementan huecos)
     if hunter[1] > ALTO_VP:
         hunter[0] = 100 # De nuevo a la x inicial
