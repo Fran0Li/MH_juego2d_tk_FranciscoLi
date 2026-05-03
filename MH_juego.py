@@ -135,19 +135,26 @@ def mover_hunter():
             break
     if en_laescalera:
         hunter[2] = 0 # Detiene gravedad para que no se caiga
-        
-        # dirección + espacio, salta.
-        # Si se pulsa espacio da un impulso, si hay direccion salta
+        # salto lateral: espacio + direccion
         if teclas["space"] and (teclas["Left"] or teclas["Right"]):
-            hunter[2] = POTENCIA_JUMP # Aplicamos fuerza de salto
-            hunter[3] = False         # Ya no está "en el suelo/escalera"
-            en_laescalera = False     # Fuerza la salida del estado escalera
-        elif teclas["space"]:#para solo trepar
-            hunter[1] -= VELOCIDAD_MOV
-        # bajar de la esclaera 
-        if teclas["Down"]: 
-            hunter[1] += VELOCIDAD_MOV
+            hunter[2] = POTENCIA_JUMP # potencia de salto
+            hunter[3] = False # ya no esta en suelo
+            en_laescalera = False # apaga modo escalera para volar
+            
+        # salto hacia arriba: si ya llego al tope de la escalera (e[1])
+        elif teclas["space"] and hunter[1] <= e[1] + 10: 
+            hunter[2] = POTENCIA_JUMP # potencia de salto
+            hunter[1] -= 10 # empujon extra para despegarse del borde
+            hunter[3] = False # ya no esta en suelo
+            en_laescalera = False # apaga modo escalera
 
+        # para trepar: solo si no esta saltando
+        elif teclas["space"]: 
+            hunter[1] -= VELOCIDAD_MOV # sube por la escalera
+
+        # para bajar: con la flecha hacia abajo
+        if teclas["Down"]: 
+            hunter[1] += VELOCIDAD_MOV # baja por la escalera
     else:    
         #se ejecuta si no está en las escaleras
         hunter[2] += GRAVEDAD # la gravedad jala hacia abajo sumando a la velocidad
