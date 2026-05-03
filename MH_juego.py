@@ -168,6 +168,10 @@ for p in plataformas:
     # p[0] = x, p[1] = y, p[2] = ancho, p[3] = alto
     # se guarda el id en p[4]  para que el sistema de colisiones sepa que es cada dato
     p[4] = canvas.create_rectangle(p[0], p[1], p[0] + p[2], p[1] + p[3], fill= p[5], outline="White")#Asigna también colores
+#Dibujar escaleras
+for e in escaleras:
+    # e[0]=x, e[1]=y, e[2]=ancho, e[3]=alto, e[5]=color
+    e[4] = canvas.create_rectangle(e[0], e[1], e[0] + e[2], e[1] + e[3], fill=e[5], outline="white", stipple="gray50" )#stipple para dar el efecto de rejilla!
 
 #Dibujar a hunter(jugador)
 hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + ANCHO_HUNTER, hunter [1] + ALT_HUNTER, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
