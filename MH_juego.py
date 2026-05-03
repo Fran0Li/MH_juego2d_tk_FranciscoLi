@@ -2,6 +2,7 @@ import tkinter as tk#importación de la librería tkinter y se nombra como tk
 import pygame as py#importación de la librería pygame para el audio
 import math#importación de la librería de mate para su uso posterior
 
+
 #Constantes para la ventana
 ANCHO_VP = 800 #ancho de la ventana principal
 ALTO_VP = 600 #alto de la ventana prrincipal
@@ -23,20 +24,22 @@ hunter = [100, 100, 0, False, None]
 #i[4]: identidad del dibuj en el Canvas (ID)
 
 #Lista de plataformas
-#cada lista tiene: [x, y, ancho, alto, ID]
+#cada lista tiene: [x, y, ancho, alto, ID, color]
 plataformas = [[0, 580, 300, 20, None, "brown"], [500, 580, 300, 20, None, "brown"], [300, 450, 200, 20, None, "orange"], [85, 350, 150, 20, None, "orange"], [550, 300, 150, 20, None, "orange"]]
 #La primera lista es el suelo pt1 
 # La segunda es la otra parte del suelo para crear un hueco 
 #La tercera, plataforma 1
 #La cuarta, plataforma 2
 #La quinta, plataforma 3
+#Lista de escaleras: [x, y, ancho, alto, ID, color]
+escaleras = [[350, 350, 40, 230, None, "#7F611F"]]
 
 #info de la meta
 #en la lista se tiene: [ x, y, ancho, alto, id]
 meta = [650, 250, 30, 30, None]
 
 #interruptores de las teclas para un movimiento fluido 
-teclas = {"Left": False, "Right": False, "space": False}
+teclas = {"Left": False, "Right": False, "space": False, "Down": False}
 #En orden respectivo de izquierda a derecha
 #Estado de la flecha izquierda o a, estado de la flecha derecha o d, estado de la tecla espacio o W
 
@@ -47,6 +50,8 @@ def derecha(event):
     teclas["Right"] = True#Lo mismo que el de arriba pero para la derecha
 def salto(event):
     teclas["space"] = True#Lo mismo pero hacia arriba, el salto
+def abajo(event):
+    teclas["Down"] = True#Lo mismo pero para bajar
 
 def detener_key(event):#Funcion para detener el interruptor
     k = event.keysym #captura nombre de la tecla que el usuario dejó de presionar
@@ -56,6 +61,8 @@ def detener_key(event):#Funcion para detener el interruptor
         teclas["Right"] = False #apaga interruptor de derecha
     elif k in ["space", "w", "W"]:# si fue salto, arriba
         teclas["space"] = False # apaga interruptor de salto
+    elif k in ["Down", "s", "S"]:# si fue abajo, baja escalera
+        teclas["Down"] = False# apaga interruptor de bajar
 
 #Lógica del mov!! y colisiones
 
@@ -72,8 +79,25 @@ def mover_hunter():
         hunter[3] = False #desactiva el estado de que está en el suelo
 
     #Aplicación de la Física!
-    hunter[2] += GRAVEDAD # la gravedad jala hacia abajo sumando a la velocidad
-    hunter[1] += hunter[2] # la posición Y cambia según la velocidad vertical que se acumule
+    #Lógica de Escaleras
+    en_laescalera = False
+    for e in escaleras:
+         # Revisa si hunter está en la escalera
+         if (hunter[0] + ANCHO_HUNTER > e[0] and hunter[0] < e[0] + e[2] and
+            hunter[1] + ALT_HUNTER > e[1] and hunter[1] < e[1] + e[3]):
+            en_laescalera = True
+            break
+         
+    if en_laescalera:#Si está en la escalera
+            hunter[2] = 0 # se pone la velocidad vertical en 0 para que no caiga
+            if teclas["space"]: #Con W o Espacio sube
+                hunter [1] -= VELOCIDAD_MOV
+            if teclas["Down"]: #Con flecha hacia abajo o S
+                hunter[1] += VELOCIDAD_MOV
+    else:    
+        #se ejecuta si no está en las escaleras
+        hunter[2] += GRAVEDAD # la gravedad jala hacia abajo sumando a la velocidad
+        hunter[1] += hunter[2] # la posición Y cambia según la velocidad vertical que se acumule
 
     # Colisiónes en plataformas y piso, cambio para que sea posible
     hunter[3] = False # Se asume que esta en el aire, que está cayendo
@@ -155,9 +179,11 @@ meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta
 ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
 ventana.bind("<KeyPress-Right>", derecha)#Vincula flecha der para que active función derecha
 ventana.bind("<KeyPress-space>", salto)#Vincula espacio para que active función salto
+ventana.bind("<KeyPress-Down>", abajo)#Vincula la flecha hacia abajo para que active la función bajar
 ventana.bind("<KeyPress-a>", izquier)#Vincula a para funcion izquier
 ventana.bind("<KeyPress-d>", derecha)#Vincula d para funcion derecha
 ventana.bind("<KeyPress-w>", salto)#Vincula w para funcion salto
+ventana.bind("<KeyPress-s>", abajo)#Vincula s para funcion bajar
 #KeyRelease es un evento, se activa cuando el usuario  levanta cualquier tecla
 ventana.bind("<KeyRelease>", detener_key)#al activarse, la funcion detener_key revisa cual fue y apaga el interruptor
 
