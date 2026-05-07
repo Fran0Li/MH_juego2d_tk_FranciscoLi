@@ -64,8 +64,8 @@ meta = [650, 250, 30, 30, None]
 
 # Matriz de muerciélagos [ID, x, y]
 murcielagos = []
-puntos = 0
-contador_frames = 0 #para simular azar
+puntos = [0] #Lista mutable
+contador_frames = [0] #para simular azar
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False, "Down": False}
@@ -114,8 +114,45 @@ def cargar_npantalla(num):
         canvas.itemconfig(meta[4], state="normal") # se vuelve visible en la segunda pantalla
     else:
         canvas.itemconfig(meta[4], state="hidden")# oculta en la primer pantalla
+
 #Lógica del mov!! y colisiones
 
+#Lógica y colisiones de objetos que caen
+def lluvia_murcielagos(canvas, lista_m, contador, h_x):
+    contador[0] += 1 #aumenta contador de cuadros
+    
+    if contador[0] % 60 == 0:# Cada 60 cuadros se genera un murciélago
+        #"Azar"
+        mx = (h_x * 7 + contador[0]) % (ANCHO_VP - 100) + 50 #Usa posición del jugador(h_x) y el tiempo para que parezca al azar la aparición
+        m_id = canvas.create_oval(mx, -20, mx + 20, 0, fill="yellow", outline="black")#Dibujo en el canvas
+
+        lista_m.append([m_id, mx, -20])#Nueva fila en matriz
+
+# Colisiones de murcielagos
+def actualizar_murcielagos(canvas, lista_m, puntos, h_pos, text_id):
+    #Se recorre la matriz de muerciélagos
+    for i in range(len(lista_m) - 1, -1, -1):
+        m = lista_m [i] #Extrae datos
+        m[2] += 4 #Actualiza la columna 2 (y) para caída
+
+        canvas.coords(m[0], m[1], m[2], m[1]+20, m[2]+20) #para mover el dibujo
+
+        #Detección de colisiones
+        #h_pos es la lista de hunter
+        if (hunter[0] < m[1] + 20 and h_pos[0] + ANCHO_HUNTER > m[1] and
+            h_pos[1] < m[2] + 20 and h_pos[1] + ALT_HUNTER > m[2]): #cuando colisionan
+
+            canvas.delete(m[0]) # se elimina el dibujo
+            lista_m.pop(i)      #Elimina fila de la matriz
+            puntos[0] += 10 # aumenta el valor en puntaje_lista
+            canvas.itemconfig(text_id, text=f"Puntos: {puntos[0]}")#actualiza nuevo puntaje
+
+        elif m[2] > ALTO_VP: # si el murcielago pasa el alto de la ventana 
+            canvas.delete(m[0])#se borra
+            lista_m.pop(i) #Borra de la matriz
+
+
+#Movimiento y colisiones del jugador
 def mover_hunter():
     #Movimiento horizontal
     if  teclas["Left"]:#Si se presiona esta tecla
@@ -227,6 +264,11 @@ def mover_hunter():
 def animove():
     mover_hunter() # Ejecuta la lógica de movimiento y salto
 
+    #Ejecución de las funciones de los murcielagos, pasando las listas como argumentos
+    lluvia_murcielagos(canvas, murcielagos, contador_frames, hunter[0])
+    actualizar_murcielagos(canvas, murcielagos, puntos, hunter, texto_puntos)
+
+
     #Actualiza el dibujo del personaje usando las coordenadas de  la lista de hunter
     #canva.coords usa: (ID, x1, y1, x2, y2)
     canvas.coords(hunter[4], hunter[0], hunter[1], hunter[0] + 30, hunter[1]+ 40)
@@ -271,6 +313,9 @@ ventana.bind("<KeyPress-w>", salto)#Vincula w para funcion salto
 ventana.bind("<KeyPress-s>", abajo)#Vincula s para funcion bajar
 #KeyRelease es un evento, se activa cuando el usuario  levanta cualquier tecla
 ventana.bind("<KeyRelease>", detener_key)#al activarse, la funcion detener_key revisa cual fue y apaga el interruptor
+
+#Dibuja marcador de puntos en esquina
+texto_puntos = canvas.create_text(700, 30, text="Puntos: 0", fill="white", font=("Arial", 18, "bold"))
 
 animove()
 
