@@ -1,6 +1,5 @@
 import tkinter as tk#importación de la librería tkinter y se nombra como tk
 import pygame as py#importación de la librería pygame para el audio
-import math#importación de la librería de mate para su uso posterior
 
 
 #Constantes para la ventana
@@ -62,6 +61,11 @@ escaleras = pantallas[game_state["pantalla_actual"]]["escaleras"]#Lo mismo pero 
 #info de la meta
 #en la lista se tiene: [ x, y, ancho, alto, id]
 meta = [650, 250, 30, 30, None]
+
+# Matriz de muerciélagos [ID, x, y]
+murcielagos = []
+puntos = 0
+contador_frames = 0 #para simular azar
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False, "Down": False}
@@ -183,7 +187,7 @@ def mover_hunter():
                     hunter[3] = True #activa interruptor de suelo para que se pueda saltar otra vez
     #Límites laterales para que no desaparezca al salirse
     #Lógica de cambio de zona paara un mapa extendido 
-    if hunter[0] > ANCHO_VP:
+    if hunter[0] > ANCHO_VP: #Siguiente pantalla derecha
         hunter[0] = 10# teletransporta a huntee al inicio de la siguient pantalla
         # Se aumenta el contador de pantalla para pasar a la segunda
         game_state["pantalla_actual"] += 1
@@ -193,8 +197,14 @@ def mover_hunter():
             canvas.configure(bg="#000000")
             print(f"Cambio de zona: {game_state['pantalla_actual']}")
 
-    elif hunter [0] < 0:#  se frena en el borde 0 por su x
-        hunter[0] = 0#frena
+    elif hunter [0] < 0:#  Izquierda, pantalla anterior
+        if game_state["pantalla_actual"] > 1: #Si no es la primera
+            game_state["pantalla_actual"] -= 1
+            hunter[0] = ANCHO_VP - 40 #Aparece en pantalla anterior
+            cargar_npantalla(game_state["pantalla_actual"])
+            print(f"Regresando a zona: {game_state['pantalla_actual']}")
+        else:
+            hunter[0] = 0#frena 
 
     #Lógica reset por caídaa (por si se implementan huecos)
     if hunter[1] > ALTO_VP:
@@ -225,7 +235,7 @@ def animove():
 
 #Ventana interfazconfig
 ventana = tk.Tk()#crea base
-ventana.title("MH 2026_FranLi") #Título de la ventana
+ventana.title("MH 2026_FranLi") #Título
 ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño de ventana
 
 
