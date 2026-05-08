@@ -40,7 +40,7 @@ pantallas = {
             [300, 450, 200, 20, None, "#2b1d0e"]
         ],
         "escaleras": [ # lista de escaleras de la primer pantalla
-            [350, 350, 40, 230, None, "#7F611F"] # Escalera del nivel 1
+            [350, 350, 30, 230, None, "#7F611F"] # Escalera del nivel 1
         ]
     },
     2: {
@@ -49,8 +49,8 @@ pantallas = {
             [200, 300, 400, 20, None, "blue"]
         ],
         "escaleras": [ # lista de las escaleras de la segunda pantalla
-            [100, 200, 40, 380, None, "#7F611F"], # Escalera diferente para nivel 2
-            [600, 200, 40, 380, None, "#7F611F"]  
+            [100, 200, 30, 380, None, "#7F611F"], # Escalera diferente para nivel 2
+            [600, 200, 30, 380, None, "#7F611F"]  
             ]}}
 
 #Para el inicio
@@ -289,11 +289,19 @@ def mover_hunter():
 
 def animove():
     mover_hunter() # Ejecuta la lógica de movimiento y salto
-    # Cambiar imagen de Hunter según dirección
-    if teclas["Left"]:
-        canvas.itemconfig(hunter[4], image=img_hunter_izq)
-    elif teclas["Right"]:
-        canvas.itemconfig(hunter[4], image=img_hunter_der)
+    # Lógica de Cambio imagen de Hunter según dirección
+    if not hunter[3]: # Si no está en el suelo
+        if teclas["Left"]:
+            canvas.itemconfig(hunter[4], image=img_hunter_jump_izq)
+        else: # Si va a la derecha o cae recto
+            canvas.itemconfig(hunter[4], image=img_hunter_jump_der)
+    
+    else: # Si está caminando o en el sueloI
+        if teclas["Left"]:
+            canvas.itemconfig(hunter[4], image=img_hunter_izq)
+        elif teclas["Right"]:
+            canvas.itemconfig(hunter[4], image=img_hunter_der)
+
 
     #Ejecución de las funciones de los murcielagos, pasando las listas como argumentos
     lluvia_murcielagos(canvas, murcielagos, contador_frames, hunter[0])
@@ -315,6 +323,8 @@ ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño d
 #Carga de imagenes (sprites)
 img_hunter_der = tk.PhotoImage(file="Hunter_right1.png") #Imagen de personaje viendo a la der
 img_hunter_izq = tk.PhotoImage(file="Hunter_left.png")# viendo a la izq
+img_hunter_jump_der = tk.PhotoImage(file="Hunter_up_right1.png")
+img_hunter_jump_izq = tk.PhotoImage(file="Hunter_up_left.png")
 img_fondo = tk.PhotoImage(file="game_background.png")# fondo de nivel
 img_moneda = tk.PhotoImage(file="Bat_coin.png")# img de bat_coins
 img_enemigo_rojo = tk.PhotoImage(file="Red_bat_enemy1.png")# Enemigo 1
