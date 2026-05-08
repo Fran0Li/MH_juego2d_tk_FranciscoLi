@@ -67,6 +67,12 @@ murcielagos = []
 puntos = [0] #Lista mutable
 contador_frames = [0] #para simular azar
 
+#Matriz de enemigos
+#Tipos: enemigo normal, enemigo roba puntos
+enemigos =[ [400, 540, 30, 30, 1, None, "red"], [200, 250, 30, 30, 2, None, "purple"]]
+vidas = [3]#Lista mutable para vidas
+
+
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False, "Down": False}
 #En orden respectivo de izquierda a derecha
@@ -150,6 +156,26 @@ def actualizar_murcielagos(canvas, lista_m, puntos, h_pos, text_id):
         elif m[2] > ALTO_VP: # si el murcielago pasa el alto de la ventana 
             canvas.delete(m[0])#se borra
             lista_m.pop(i) #Borra de la matriz
+
+#Colisiones y gestión de enemigos y vida
+def coli_enemigos(canvas, lista_e, h_pos, vidas_l, puntos_l, txt_puntos, txt_vidas):
+    #h_pos = lista de hunter
+    for en in lista_e:
+        if (h_pos[0] < en[0] + en[2] and h_pos[0] + 30 > en[0] and h_pos[1] < en[1] + en[3] and h_pos[1] + 40 > en[1]): #colision de hunter con los enemigos
+            #Penalización
+            vidas_l[0] -= 1
+            if en[4] == 2:# Si es del segundo tipo, roba puntos
+                puntos_l[0] = max(0, puntos_l[0] - 20)
+            #Actualización para visualizar
+            canvas.itemconfig(txt_vidas, text=f"Vidas: {vidas_l[0]}")#Muestra vidas
+            canvas.itemconfig(txt_puntos, text=f"Puntos: {puntos_l[0]}")#Muestra puntos
+            #Reset de posiciónn de hunter por el golpe
+            h_pos[0], h_pos[1], h_pos[2] = 100, 100, 0
+
+            if vidas_l[0] <= 0:#Si la vida llega a cero
+                print("GAME OVER")
+
+
 
 
 #Movimiento y colisiones del jugador
@@ -268,6 +294,8 @@ def animove():
     lluvia_murcielagos(canvas, murcielagos, contador_frames, hunter[0])
     actualizar_murcielagos(canvas, murcielagos, puntos, hunter, texto_puntos)
 
+    #Gestion de enemigos
+    coli_enemigos(canvas, enemigos, hunter, vidas, puntos, texto_puntos, texto_vidas)
 
     #Actualiza el dibujo del personaje usando las coordenadas de  la lista de hunter
     #canva.coords usa: (ID, x1, y1, x2, y2)
@@ -296,6 +324,9 @@ for e in escaleras:
     # e[0]=x, e[1]=y, e[2]=ancho, e[3]=alto, e[5]=color
     e[4] = canvas.create_rectangle(e[0], e[1], e[0] + e[2], e[1] + e[3], fill=e[5], outline="white", stipple="gray50" )#stipple para dar el efecto de rejilla!
 
+for en in enemigos:
+    en[5] = canvas.create_rectangle(en[0], en[1], en[0]+en[2], en[1]+en[3], fill=en[6], outline="white")
+
 #Dibujar a hunter(jugador)
 hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + ANCHO_HUNTER, hunter [1] + ALT_HUNTER, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
 
@@ -315,8 +346,8 @@ ventana.bind("<KeyPress-s>", abajo)#Vincula s para funcion bajar
 ventana.bind("<KeyRelease>", detener_key)#al activarse, la funcion detener_key revisa cual fue y apaga el interruptor
 
 #Dibuja marcador de puntos en esquina
-texto_puntos = canvas.create_text(700, 30, text="Puntos: 0", fill="white", font=("Arial", 18, "bold"))
-
+texto_puntos = canvas.create_text(700, 30, text="Puntos:  0", fill="white", font=("Arial", 16, "bold"))
+texto_vidas = canvas.create_text(100, 30, text="Vidas: 3", fill="red", font=("Arial", 18, "bold"))
 animove()
 
 ventana.mainloop()
