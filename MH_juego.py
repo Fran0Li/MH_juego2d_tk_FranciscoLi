@@ -307,7 +307,13 @@ def animove():
 ventana = tk.Tk()#crea base
 ventana.title("MH 2026_FranLi") #Título
 ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño de ventana
-
+#Carga de imagenes (sprites)
+img_hunter_der = tk.PhotoImage(file="Hunter_right1.png") #Imagen de personaje viendo a la der
+img_hunter_izq = tk.PhotoImage(file="Hunter_left.png")# viendo a la izq
+img_fondo = tk.PhotoImage(file="game_background.png")# fondo de nivel
+img_moneda = tk.PhotoImage(file="Bat_coin.png")# img de bat_coins
+img_enemigo_rojo = tk.PhotoImage(file="Red_bat_enemy1.png")# Enemigo 1
+img_enemigo_sombra = tk.PhotoImage(file="Shadow_enemy2.png")# enemigo 2
 
 # Area donde se dibujarán los rectángulos
 canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#2B122C")#Dimensiones y color
