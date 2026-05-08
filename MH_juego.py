@@ -37,7 +37,7 @@ pantallas = {
         "plataformas": [# plataformas de la primer pantalla
             [0, 580, 300, 20, None, "brown"], 
             [500, 580, 300, 20, None, "brown"], 
-            [300, 450, 200, 20, None, "orange"]
+            [300, 450, 200, 20, None, "#2b1d0e"]
         ],
         "escaleras": [ # lista de escaleras de la primer pantalla
             [350, 350, 40, 230, None, "#7F611F"] # Escalera del nivel 1
@@ -130,7 +130,7 @@ def lluvia_murcielagos(canvas, lista_m, contador, h_x):
     if contador[0] % 60 == 0:# Cada 60 cuadros se genera un murciélago
         #"Azar"
         mx = (h_x * 7 + contador[0]) % (ANCHO_VP - 100) + 50 #Usa posición del jugador(h_x) y el tiempo para que parezca al azar la aparición
-        m_id = canvas.create_oval(mx, -20, mx + 20, 0, fill="yellow", outline="black")#Dibujo en el canvas
+        m_id = canvas.create_image(mx, -20, image = img_moneda, anchor = "nw")#Dibujo en el canvas
 
         lista_m.append([m_id, mx, -20])#Nueva fila en matriz
 
@@ -141,7 +141,7 @@ def actualizar_murcielagos(canvas, lista_m, puntos, h_pos, text_id):
         m = lista_m [i] #Extrae datos
         m[2] += 4 #Actualiza la columna 2 (y) para caída
 
-        canvas.coords(m[0], m[1], m[2], m[1]+20, m[2]+20) #para mover el dibujo
+        canvas.coords(m[0], m[1], m[2]) #para mover el dibujo(imagenes solo ocupan x, y)
 
         #Detección de colisiones
         #h_pos es la lista de hunter
@@ -289,6 +289,11 @@ def mover_hunter():
 
 def animove():
     mover_hunter() # Ejecuta la lógica de movimiento y salto
+    # Cambiar imagen de Hunter según dirección
+    if teclas["Left"]:
+        canvas.itemconfig(hunter[4], image=img_hunter_izq)
+    elif teclas["Right"]:
+        canvas.itemconfig(hunter[4], image=img_hunter_der)
 
     #Ejecución de las funciones de los murcielagos, pasando las listas como argumentos
     lluvia_murcielagos(canvas, murcielagos, contador_frames, hunter[0])
@@ -298,8 +303,8 @@ def animove():
     coli_enemigos(canvas, enemigos, hunter, vidas, puntos, texto_puntos, texto_vidas)
 
     #Actualiza el dibujo del personaje usando las coordenadas de  la lista de hunter
-    #canva.coords usa: (ID, x1, y1, x2, y2)
-    canvas.coords(hunter[4], hunter[0], hunter[1], hunter[0] + 30, hunter[1]+ 40)
+    #canva.coords usa: (ID, x, y) por se img
+    canvas.coords(hunter[4], hunter[0], hunter[1])
     #los valores respectivamente son, el ID, esquina superior derecha, esquina inferior derecha (x+ancho, y+alto)
     ventana.after(20, animove)#Le dice a la ventana que vuelva a correr esta función en 20 ms
 
@@ -318,6 +323,9 @@ img_enemigo_sombra = tk.PhotoImage(file="Shadow_enemy2.png")# enemigo 2
 # Area donde se dibujarán los rectángulos
 canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#2B122C")#Dimensiones y color
 canvas.pack()#Coloca el canvas dentro de la ventana
+#Dibujo del fondo (img) atras del todo
+canvas.create_image(0, 0, image = img_fondo, anchor="nw")
+
 #Dibujar plataformas (incluye suelo)
 for p in plataformas:
     #Se usa p[5] para el color fill
@@ -330,16 +338,20 @@ for e in escaleras:
     # e[0]=x, e[1]=y, e[2]=ancho, e[3]=alto, e[5]=color
     e[4] = canvas.create_rectangle(e[0], e[1], e[0] + e[2], e[1] + e[3], fill=e[5], outline="white", stipple="gray50" )#stipple para dar el efecto de rejilla!
 
+# Dibujar Enemigos con imagen
 for en in enemigos:
-    en[5] = canvas.create_rectangle(en[0], en[1], en[0]+en[2], en[1]+en[3], fill=en[6], outline="white")
+    if en[4] == 1: # Tipo Rojo
+        en[5] = canvas.create_image(en[0], en[1], image=img_enemigo_rojo, anchor="nw")#nw toma la esquina superior y la pone en las coords
+    else:          # Tipo Sombra
+        en[5] = canvas.create_image(en[0], en[1], image=img_enemigo_sombra, anchor="nw")
 
 #Dibujar a hunter(jugador)
-hunter[4] = canvas.create_rectangle(hunter[0], hunter[1], hunter[0] + ANCHO_HUNTER, hunter [1] + ALT_HUNTER, fill="purple", outline="white")#Asigna posición, tamaño y colores al dibujo
+hunter[4] = canvas.create_image(hunter[0], hunter[1], image = img_hunter_der, anchor = "nw")#Dibujo img hunter
 
 #Dibujar la meta
 meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow", state="hidden")
 
-#Binds, spn la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
+#Binds, son la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
 ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
 ventana.bind("<KeyPress-Right>", derecha)#Vincula flecha der para que active función derecha
 ventana.bind("<KeyPress-space>", salto)#Vincula espacio para que active función salto
