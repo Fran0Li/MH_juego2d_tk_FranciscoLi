@@ -1,7 +1,21 @@
 import tkinter as tk#importación de la librería tkinter y se nombra como tk
 import pygame as py#importación de la librería pygame para el audio
 
+# Funciones de ventanas
+def ir_a_juego():
+    ventana_menu.withdraw()  # Oculta el menú
+    abrir_ventana_juego()
 
+def volver_al_menu_desde_juego():
+    # Esta función se asegura de limpiar todo antes de volver
+    global ventana
+    ventana.destroy()        # Cierra la ventana del juego
+    ventana_menu.deiconify() # Muestra el menú de nuevo
+
+def ir_a_editor():
+    ventana_menu.withdraw()
+    print("Abriendo Editor...") # Aquí luego llamarás a lanzar_ventana_editor()
+   
 #Constantes para la ventana
 ANCHO_VP = 800 #ancho de la ventana principal
 ALTO_VP = 600 #alto de la ventana prrincipal
@@ -75,8 +89,8 @@ vidas = [3]#Lista mutable para vidas
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False, "Down": False}
-#En orden respectivo de izquierda a derecha
 #Estado de la flecha izquierda o a, estado de la flecha derecha o d, estado de la tecla espacio o W
+
 
 #Funciones de movimiento, entradas
 def izquier(event):
@@ -316,10 +330,70 @@ def animove():
     #los valores respectivamente son, el ID, esquina superior derecha, esquina inferior derecha (x+ancho, y+alto)
     ventana.after(20, animove)#Le dice a la ventana que vuelva a correr esta función en 20 ms
 
-#Ventana interfazconfig
-ventana = tk.Tk()#crea base
-ventana.title("MH 2026_FranLi") #Título
-ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño de ventana
+def abrir_ventana_juego():
+    global ventana, canvas, texto_puntos, texto_vidas
+    #Ventana juego config
+    ventana = tk.Toplevel()#crea base
+    ventana.title("Murcian Hunter") #Título
+    ventana.resizable(False,False)#Para que el usuario no pueda alterar el tamaño de ventana
+    ventana.protocol("WM_DELETE_WINDOW", volver_al_menu_desde_juego)# si cierra la ventana con x llama a la funcion de volver al menu
+
+    # Area donde se dibujarán los rectángulos
+    canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#2B122C")#Dimensiones y color
+    canvas.pack()#Coloca el canvas dentro de la ventana
+    #Dibujo del fondo (img) atras del todo
+    canvas.create_image(0, 0, image = img_fondo, anchor="nw")
+
+    #Dibujar plataformas (incluye suelo)
+    for p in plataformas:
+        #Se usa p[5] para el color fill
+        #Dibujar cada una de las plataformas gracias al ciclo. se usan los datos de "Plataformas"
+        # p[0] = x, p[1] = y, p[2] = ancho, p[3] = alto
+        # se guarda el id en p[4]  para que el sistema de colisiones sepa que es cada dato
+        p[4] = canvas.create_rectangle(p[0], p[1], p[0] + p[2], p[1] + p[3], fill= p[5], outline="White")#Asigna también colores
+    #Dibujar escaleras
+    for e in escaleras:
+        # e[0]=x, e[1]=y, e[2]=ancho, e[3]=alto, e[5]=color
+        e[4] = canvas.create_rectangle(e[0], e[1], e[0] + e[2], e[1] + e[3], fill=e[5], outline="white", stipple="gray50" )#stipple para dar el efecto de rejilla!
+
+    # Dibujar Enemigos con imagen
+    for en in enemigos:
+        if en[4] == 1: # Tipo Rojo
+            en[5] = canvas.create_image(en[0], en[1], image=img_enemigo_rojo, anchor="nw")#nw toma la esquina superior y la pone en las coords
+        else:          # Tipo Sombra
+            en[5] = canvas.create_image(en[0], en[1], image=img_enemigo_sombra, anchor="nw")
+
+    #Dibujar a hunter(jugador)  
+    hunter[4] = canvas.create_image(hunter[0], hunter[1], image = img_hunter_der, anchor = "nw")#Dibujo img hunter
+
+    #Dibujar la meta
+    meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow", state="hidden")
+
+    #Binds, son la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
+    ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
+    ventana.bind("<KeyPress-Right>", derecha)#Vincula flecha der para que active función derecha
+    ventana.bind("<KeyPress-space>", salto)#Vincula espacio para que active función salto
+    ventana.bind("<KeyPress-Down>", abajo)#Vincula la flecha hacia abajo para que active la función bajar
+    ventana.bind("<KeyPress-a>", izquier)#Vincula a para funcion izquier
+    ventana.bind("<KeyPress-d>", derecha)#Vincula d para funcion derecha
+    ventana.bind("<KeyPress-w>", salto)#Vincula w para funcion salto
+    ventana.bind("<KeyPress-s>", abajo)#Vincula s para funcion bajar
+    #KeyRelease es un evento, se activa cuando el usuario  levanta cualquier tecla
+    ventana.bind("<KeyRelease>", detener_key)#al activarse, la funcion detener_key revisa cual fue y apaga el interruptor
+
+    #Dibuja marcador de puntos en esquina
+    texto_puntos = canvas.create_text(700, 30, text="Puntos:  0", fill="white", font=("Arial", 16, "bold"))
+    texto_vidas = canvas.create_text(100, 30, text="Vidas: 3", fill="red", font=("Arial", 18, "bold"))
+    # Botón de "Volver" dentro del juego (opcional si ya usas la X de la ventana)
+    btn_regresar = tk.Button(ventana, text="Volver al Menú", command=volver_al_menu_desde_juego)
+    canvas.create_window(760, 590, window=btn_regresar, width= "90", height= "20") # Lo pone en la esquina inferior derecha
+    animove()
+
+ventana_menu = tk.Tk()
+ventana_menu.title("Murcial Hunter - menu")
+ventana_menu.geometry("400x500")
+ventana_menu.resizable(False,False)
+
 #Carga de imagenes (sprites)
 img_hunter_der = tk.PhotoImage(file="Hunter_right1.png") #Imagen de personaje viendo a la der
 img_hunter_izq = tk.PhotoImage(file="Hunter_left.png")# viendo a la izq
@@ -330,52 +404,16 @@ img_moneda = tk.PhotoImage(file="Bat_coin.png")# img de bat_coins
 img_enemigo_rojo = tk.PhotoImage(file="Red_bat_enemy1.png")# Enemigo 1
 img_enemigo_sombra = tk.PhotoImage(file="Shadow_enemy2.png")# enemigo 2
 
-# Area donde se dibujarán los rectángulos
-canvas = tk.Canvas(ventana, width=ANCHO_VP, height=ALTO_VP, bg="#2B122C")#Dimensiones y color
-canvas.pack()#Coloca el canvas dentro de la ventana
-#Dibujo del fondo (img) atras del todo
-canvas.create_image(0, 0, image = img_fondo, anchor="nw")
+# Elementos del Menú
+title = tk.Label(ventana_menu, text="MURCIAN HUNTER", font=("Impact", 28))
+title.pack(pady=40)
 
-#Dibujar plataformas (incluye suelo)
-for p in plataformas:
-    #Se usa p[5] para el color fill
-    #Dibujar cada una de las plataformas gracias al ciclo. se usan los datos de "Plataformas"
-    # p[0] = x, p[1] = y, p[2] = ancho, p[3] = alto
-    # se guarda el id en p[4]  para que el sistema de colisiones sepa que es cada dato
-    p[4] = canvas.create_rectangle(p[0], p[1], p[0] + p[2], p[1] + p[3], fill= p[5], outline="White")#Asigna también colores
-#Dibujar escaleras
-for e in escaleras:
-    # e[0]=x, e[1]=y, e[2]=ancho, e[3]=alto, e[5]=color
-    e[4] = canvas.create_rectangle(e[0], e[1], e[0] + e[2], e[1] + e[3], fill=e[5], outline="white", stipple="gray50" )#stipple para dar el efecto de rejilla!
+# El botón "INICIAR PARTIDA" llama a ir_a_juego para ocultar el menú
+btn_play = tk.Button(ventana_menu, text="INICIAR PARTIDA", width=25, height=2, font=("Arial", 12, "bold"), bg="#911C75", fg="white", command=ir_a_juego)
+btn_play.pack(pady=10)
 
-# Dibujar Enemigos con imagen
-for en in enemigos:
-    if en[4] == 1: # Tipo Rojo
-        en[5] = canvas.create_image(en[0], en[1], image=img_enemigo_rojo, anchor="nw")#nw toma la esquina superior y la pone en las coords
-    else:          # Tipo Sombra
-        en[5] = canvas.create_image(en[0], en[1], image=img_enemigo_sombra, anchor="nw")
+# El botón del Editor (luego haremos su función)
+btn_editor = tk.Button(ventana_menu, text="EDITOR DE MAPAS", width=25, height=2, font=("Arial", 10), command=ir_a_editor)
+btn_editor.pack(pady=10)
 
-#Dibujar a hunter(jugador)
-hunter[4] = canvas.create_image(hunter[0], hunter[1], image = img_hunter_der, anchor = "nw")#Dibujo img hunter
-
-#Dibujar la meta
-meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow", state="hidden")
-
-#Binds, son la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
-ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
-ventana.bind("<KeyPress-Right>", derecha)#Vincula flecha der para que active función derecha
-ventana.bind("<KeyPress-space>", salto)#Vincula espacio para que active función salto
-ventana.bind("<KeyPress-Down>", abajo)#Vincula la flecha hacia abajo para que active la función bajar
-ventana.bind("<KeyPress-a>", izquier)#Vincula a para funcion izquier
-ventana.bind("<KeyPress-d>", derecha)#Vincula d para funcion derecha
-ventana.bind("<KeyPress-w>", salto)#Vincula w para funcion salto
-ventana.bind("<KeyPress-s>", abajo)#Vincula s para funcion bajar
-#KeyRelease es un evento, se activa cuando el usuario  levanta cualquier tecla
-ventana.bind("<KeyRelease>", detener_key)#al activarse, la funcion detener_key revisa cual fue y apaga el interruptor
-
-#Dibuja marcador de puntos en esquina
-texto_puntos = canvas.create_text(700, 30, text="Puntos:  0", fill="white", font=("Arial", 16, "bold"))
-texto_vidas = canvas.create_text(100, 30, text="Vidas: 3", fill="red", font=("Arial", 18, "bold"))
-animove()
-
-ventana.mainloop()
+ventana_menu.mainloop()
