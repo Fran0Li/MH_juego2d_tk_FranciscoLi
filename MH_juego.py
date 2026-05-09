@@ -387,6 +387,11 @@ def abrir_ventana_juego():
     # Botón de "Volver" dentro del juego (opcional si ya usas la X de la ventana)
     btn_regresar = tk.Button(ventana, text="Volver al Menú", command=volver_al_menu_desde_juego)
     canvas.create_window(760, 590, window=btn_regresar, width= "90", height= "20") # Lo pone en la esquina inferior derecha
+    #Fix para quitar el click antes de empezar
+    ventana.focus_set()          # Reclama el foco para la ventana
+    ventana.grab_set()           # Bloquea eventos en otras ventanas hasta que esta se cierre
+    ventana.attributes("-topmost", True) # Asegura que esté por encima de todo
+    
     animove()
 
 ventana_menu = tk.Tk()
@@ -403,6 +408,10 @@ img_fondo = tk.PhotoImage(file="game_background.png")# fondo de nivel
 img_moneda = tk.PhotoImage(file="Bat_coin.png")# img de bat_coins
 img_enemigo_rojo = tk.PhotoImage(file="Red_bat_enemy1.png")# Enemigo 1
 img_enemigo_sombra = tk.PhotoImage(file="Shadow_enemy2.png")# enemigo 2
+
+#Cargar música 
+py.mixer.init()
+py.mixer.music.load("tu_musica.mp3")
 
 # Elementos del Menú
 title = tk.Label(ventana_menu, text="MURCIAN HUNTER", font=("Impact", 28))
