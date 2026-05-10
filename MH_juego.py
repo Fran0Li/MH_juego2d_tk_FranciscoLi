@@ -3,13 +3,17 @@ import pygame as py#importación de la librería pygame para el audio
 
 # Funciones de control de  ventanas
 def ir_a_juego():
-    es_mapa_personalizado[0] = False#Para el editor por si es ese
+    juego_pausa[0] = False
     ventana_menu.withdraw()  # Oculta el menú
     #Musica de juego
     py.mixer.music.stop()
     py.mixer.music.load("MH_Theme.mp3") # Pon aquí el nombre de tu otra canción
     py.mixer.music.play(-1)
     abrir_ventana_juego()
+
+def ir_a_juego_base():
+    es_mapa_personalizado[0] = False#Para el editor por si es ese
+    ir_a_juego()
 
 def abrir_ventana_ajustes():
     ventana_ajustes = tk.Toplevel()
@@ -46,6 +50,10 @@ def volver_al_menu_desde_juego():
 
 def ir_a_editor():#Funcion para llamar a la ventana del editor de mapas
     ventana_menu.withdraw()
+    # Resetear el mapa del editor para empezar limpio
+    mapa_personalizado[1] = {"plataformas": [], "escaleras": [], "enemigos": []}
+    meta_personalizada[1] = [None]
+    inicio_personalizado[1] = [100, 100]
     lanzar_ventana_editor()
 
 #Sistemas para las puntuaciones
@@ -53,28 +61,38 @@ def guardar_puntajes (puntos_finales):
     # with open para abrir archivo y cerrarlo
     with open("scores.txt", "a") as f:# a es de append (añadir): va escribiendo sin borrar lo de antes
         f.write(f"Puntaje: {puntos_finales}\n") #Escribe el texto (/n: salto de linea)
-def mostrar_puntos():
-    #ventana para visualizar records
+def mostrar_puntos():#Para texto de records
     v_records = tk.Toplevel()
     v_records.title("Cazadores Leyenda")
     v_records.geometry("300x400")
 
     tk.Label(v_records, text="HISTORIAL DE PUNTOS", font=("Arial", 16, "bold")).pack(pady=10)
     
-    # El bloque try-except evita que el programa se cierre si el archivo aún no existe
     try:
-        with open("scores.txt", "r") as f: # "r" de 'read' (leer)
-            contenido = f.read()
-            if not contenido: 
-                contenido = "No hay puntajes registrados."
+        with open("scores.txt", "r") as f:
+            lineas = f.readlines()
+        
+        # Extrae solo los números de cada línea y los ordena de mayor a menor
+        puntajes = []
+        for linea in lineas:
+            linea = linea.strip()
+            if linea:
+                numero = int(linea.replace("Puntaje: ", ""))
+                puntajes.append(numero)
+        
+        puntajes.sort(reverse=True)  # mayor a menor
+        
+        if puntajes:
+            contenido = "\n".join(f"Puntaje: {p}" for p in puntajes)
+        else:
+            contenido = "No hay puntajes registrados."
+
     except FileNotFoundError:
-        # Si el archivo no existe todavía, muestra este mensaje
         contenido = "Aún no has jugado ninguna partida."
         
-    # Widget para ver puntajes con srcoll
     text_area = tk.Text(v_records, height=15, width=30)
-    text_area.insert(tk.END, contenido) # Mete el texto del archivo en el widget
-    text_area.config(state="disabled")  # 'disabled' hace que el usuario no pueda borrar los puntos
+    text_area.insert(tk.END, contenido)
+    text_area.config(state="disabled")
     text_area.pack(pady=10)
     
     tk.Button(v_records, text="Cerrar", command=v_records.destroy).pack()
@@ -110,7 +128,12 @@ def click_editor(event):
         canvas_editor.create_oval(x, y, x + ancho, y + alto, fill="cyan", outline="yellow", width=2)
         # Guarda la posición en lista de metas
         meta_personalizada[p_act] = [x, y, ancho, alto, None]
-
+    elif tipo_seleccionado[0] == "inicio":
+        # Guarda la coordenada donde el usuario hizo clic
+        inicio_personalizado[1] = [x, y]
+        # Dibujo verde temporal para marcarlo
+        canvas_editor.create_rectangle(x, y, x+30, y+40, outline="#2ecc71", dash=(4, 4), width=2)
+        canvas_editor.create_text(x+15, y-10, text="INICIO", fill="#2ecc71", font=("Arial", 8, "bold"))
 def lanzar_ventana_editor():
     global ventana_editor, canvas_editor
     ventana_editor = tk.Toplevel() 
@@ -144,13 +167,10 @@ def lanzar_ventana_editor():
     
     tk.Label(frame_objetos, text=" | EDITAR:", fg="white", bg="#2c3e50").pack(side="left", padx=5)
     
-    #Botones para alternar en que pantalla se guardan los datos
-    tk.Button(frame_objetos, text="PANTALLA 1", bg="#34495e", fg="white", command=lambda: [pantalla_edicion.__setitem__(0, 1), print("Editando P1")]).pack(side="left", padx=2)
-    tk.Button(frame_objetos, text="PANTALLA 2", bg="#34495e", fg="white", command=lambda: [pantalla_edicion.__setitem__(0, 2), print("Editando P2")]).pack(side="left", padx=2)
-
     #Boton para poner meta
     tk.Button(frame_objetos, text="META", width=12, bg="cyan", command=lambda: tipo_seleccionado.__setitem__(0, "meta")).pack(side="left", padx=5)
-
+    # En el panel de objetos del editor
+    tk.Button(frame_objetos, text="INICIO PERSONAJE", bg="#2ecc71", command=lambda: tipo_seleccionado.__setitem__(0, "inicio")).pack(side="left", padx=5)
     #Panel de enemigos
     frame_enemigos = tk.Frame(ventana_editor, bg="#34495e", pady=5)
     frame_enemigos.pack(fill="x")
@@ -162,14 +182,21 @@ def lanzar_ventana_editor():
 
     # Funcion para jugar con el mapa
     def probar_mapa_pro():
+        juego_pausa[0] = False
         es_mapa_personalizado[0] = True #activa el interruptor para cargar pantalla uando el del editor
+        # Hunter inicia donde el usuario marcó en el editor
+        coords = inicio_personalizado[1]
+        hunter[0], hunter[1], hunter[2] = coords[0], coords[1], 0
         game_state["pantalla_actual"] = 1 #Resetea a la pantalla 1
         # carga de los datos del editor a las listas activas
         global plataformas, escaleras, enemigos
         plataformas = mapa_personalizado[1]["plataformas"]
         escaleras = mapa_personalizado[1]["escaleras"]
         enemigos = mapa_personalizado[1]["enemigos"]
-
+        datos_meta = meta_personalizada.get(1, [None])
+        if datos_meta[0] is not None:
+            meta[0], meta[1], meta[2], meta[3] = datos_meta[0], datos_meta[1], datos_meta[2], datos_meta[3]
+    
         # Cierra editor y lanza el juego con la música
         ventana_editor.destroy()
         ir_a_juego() # Esta función ya pone la música y abre el juego
@@ -206,9 +233,14 @@ def mostrar_pantalla_final(mensaje, color, puntos_finales):
     
     def cerrar_y_regresar():
         v_final.destroy()
-        ventana.destroy()        # Cierra el juego
+        if 'ventana' in globals() and ventana.winfo_exists():#Cierra el juego
+            ventana.destroy()
+        # Reinicio de valores para la próxima partida
+        puntos[0] = 0
+        vidas[0] = 3
+        game_state["pantalla_actual"] = 1
         ventana_menu.deiconify() # Muestra el menú
-        # Reinicia música del menú
+        # Reinicia música del menúddwadd
         py.mixer.music.load("MH_menuTheme.mp3")
         py.mixer.music.play(-1)
 
@@ -222,7 +254,7 @@ ANCHO_VP = 800 #ancho de la ventana principal
 ALTO_VP = 600 #alto de la ventana prrincipal
 GRAVEDAD = 0.8#valor de gravedad
 POTENCIA_JUMP = -15 #potencia del salto, es negativo porque arriba es restar en Y
-VELOCIDAD_MOV = 6 #velocidad de movimiento
+VELOCIDAD_MOV = 5 #velocidad de movimiento
 #Dimensiones Hunter
 ANCHO_HUNTER = 30 
 ALT_HUNTER = 40
@@ -237,14 +269,12 @@ hunter = [100, 100, 0, False, None]
 #i[3]: boolean sobre suelo 
 #i[4]: identidad del dibuj en el Canvas (ID)
 
-#Lista de plataformas
+#Lista de datos de mapa
 #cada lista tiene: [x, y, ancho, alto, ID, color]
 #plataformas = [[0, 580, 300, 20, None, "brown"], [500, 580, 300, 20, None, "brown"], [300, 450, 200, 20, None, "orange"], [85, 350, 150, 20, None, "orange"], [550, 300, 150, 20, None, "orange"]]
 #La primera lista es el suelo pt1 
 # La segunda es la otra parte del suelo para crea#77581r un hueco 
-#La tercera, plataforma 1
-#La cuarta, plataforma 2
-#La quinta, plataforma 3
+#La tercera, plataforma 1...
 #Lista de escaleras: [x, y, ancho, alto, ID, color]
 #escaleras = [[300, 350, 40, 230, None, "#7F611F"]]
 pantallas = {
@@ -288,17 +318,18 @@ enemigos =[ [400, 540, 30, 30, 1, None, "red"], [200, 250, 30, 30, 2, None, "pur
 vidas = [3]#Lista mutable para vidas
 
 #Variables para el editor
+# Guarda [x, y] de donde empezará Hunter en el mapa del editor
+inicio_personalizado = {1: [100, 100]} # Por defecto empieza en 100, 100
+juego_pausa = [False]
 bloques_creados_editor = [] #Aquí se guardan los bloques
 # Donde se  guardará la estructura del mapa creado por el usuario
-mapa_personalizado = {
-    1: {"plataformas": [], "escaleras": [], "enemigos": []},
-    2: {"plataformas": [], "escaleras": [], "enemigos": []}
-}
+mapa_personalizado = { 1: {"plataformas": [], "escaleras": [], "enemigos": []}}
 es_mapa_personalizado = [False]  # Interruptor para saber qué lógica de niveles usar
-pantalla_edicion = [1]           # Indica si esta editando la pantalla 1 o la 2
+pantalla_edicion = [1]           # Indica si esta editando la pantalla 1 
 tipo_seleccionado = ["plataforma"] # Lo que el usuario está colocando actualmente
 tipo_denemigo = [1] #1 el rojo, 2 la sombra
-meta_personalizada = {1: [None], 2: [None]} # Para guardar la meta de cada pantalla
+meta_personalizada = {1: [None]} # Para guardar la meta de cada pantalla
+
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False, "Down": False}
@@ -342,7 +373,7 @@ def cargar_npantalla(num):
     #Si  entra por iniciar partida sera Flase y se usa nivel predeterminado
     if es_mapa_personalizado[0]:
         fuente = mapa_personalizado
-        datos_meta = meta_personalizada[num] #Usa meta del editor
+        datos_meta = meta_personalizada.get(1, [None]) #Usa meta del editor
     else:
         fuente = pantallas
         #En el nivel predeterminado, meta solo en pantalla 2
@@ -368,12 +399,6 @@ def cargar_npantalla(num):
         meta[0], meta[1], meta[2], meta[3] = datos_meta[0], datos_meta[1], datos_meta[2], datos_meta[3]
         meta[4] = canvas.create_oval(meta[0], meta[1], meta[0]+meta[2], meta[1]+meta[3], fill="cyan", outline="yellow")
     
-    # Control de la meta (solo se muestra en la pantalla 2 si es el nivel normal)
-    if not es_mapa_personalizado[0] and num == 2:
-        canvas.itemconfig(meta[4], state="normal")
-    else:
-        canvas.itemconfig(meta[4], state="hidden")#Se oculta la meta si esta en la primer pantalla
-
 
 #Lógica del mov!! y colisiones
 
@@ -427,6 +452,7 @@ def coli_enemigos(canvas, lista_e, h_pos, vidas_l, puntos_l, txt_puntos, txt_vid
             h_pos[0], h_pos[1], h_pos[2] = 100, 100, 0
 
             if vidas_l[0] <= 0:#Si la vida llega a cero
+                juego_pausa[0] = True#Para el juego
                 # Llama a la pantalla roja de Game Over
                 mostrar_pantalla_final("GAME OVER", "#5E0000", puntos_l[0])
                 return # Detiene la ejecución de la colisión
@@ -533,6 +559,7 @@ def mover_hunter():
         
         # Si se queda sin vidas, lanza la pantalla de Game Over
         if vidas[0] <= 0:
+            juego_pausa[0] = True #Para juego
             mostrar_pantalla_final("GAME OVER", "#5E0000", puntos[0])
             return
 
@@ -542,17 +569,19 @@ def mover_hunter():
     #Colisión con meta
     if (hunter [0] < meta[0] + meta[2] and hunter[0] + 30 > meta[0] and
         hunter [1] < meta[1] + meta[3]  and hunter[1] + 40 > meta[1]):# Revisa si el rectangulo de hunter y la meta se tocan
-        print("NIVEL COMPLETADOO:)")# aparece en la consola
+        if not juego_pausa[0]: #Si el juego no esta pausado ya
+            juego_pausa[0] =  True#Para el juego       
+            print("NIVEL COMPLETADOO:)")# aparece en la consola
         # Llama a la pantalla verde de Victoria
         mostrar_pantalla_final("¡VICTORIA!", "#1B4D3E", puntos[0])
         # Resetea posicion por si acaso
-        hunter[0], hunter[1], hunter[2] = 100, 100, 0
+
 
 
 #Animacion en ventana
 
 def animove():
-    if vidas[0] <= 0:# Si se acaban las vidas deja de ejecutar el bucle del juego
+    if juego_pausa [0] or not ventana.winfo_exists():# Si se acaban las vidas deja de ejecutar el bucle del juego o si se cierra ventana
         return
     mover_hunter() # Ejecuta la lógica de movimiento y salto
     # Lógica de Cambio imagen de Hunter según dirección
@@ -619,7 +648,14 @@ def abrir_ventana_juego():
     hunter[4] = canvas.create_image(hunter[0], hunter[1], image = img_hunter_der, anchor = "nw")#Dibujo img hunter
 
     #Dibujar la meta
-    meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow", state="hidden")
+    if es_mapa_personalizado[0]:
+        # En el editor siempre se muestra si fue colocada
+        meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow")
+    else:
+        # En el predeterminado, la meta solo va en pantalla 2, así que al inicio va oculta
+        # cargar_npantalla la dibujará cuando el jugador llegue a pantalla 2a
+        meta[4] = None
+        
 
     btn_config = tk.Button(ventana, text="⚙️", font=("Arial", 12), command=abrir_ventana_ajustes)#Botón de ajustes
     canvas.create_window(780, 30, window=btn_config)
@@ -635,7 +671,12 @@ def abrir_ventana_juego():
     ventana.bind("<KeyPress-s>", abajo)#Vincula s para funcion bajar
     #KeyRelease es un evento, se activa cuando el usuario  levanta cualquier tecla
     ventana.bind("<KeyRelease>", detener_key)#al activarse, la funcion detener_key revisa cual fue y apaga el interruptor
-
+    def resetear_teclas(event):#Resetea oor el foco
+        teclas["Left"] = False
+        teclas["Right"] = False
+        teclas["space"] = False
+        teclas["Down"] = False
+    ventana.bind("<FocusOut>", resetear_teclas)
     #Dibuja marcador de puntos en esquina
     texto_puntos = canvas.create_text(650, 30, text="Puntos:  0", fill="white", font=("Arial", 16, "bold"))
     texto_vidas = canvas.create_text(100, 30, text="Vidas: 3", fill="red", font=("Arial", 18, "bold"))
@@ -678,7 +719,7 @@ title.pack(pady=40)
 
 
 # El botón "INICIAR PARTIDA" llama a ir_a_juego para ocultar el menú
-btn_play = tk.Button(ventana_menu, text="INICIAR PARTIDA", width=25, height=2, font=("Arial", 12, "bold"), bg="#911C75", fg="white", command=ir_a_juego)
+btn_play = tk.Button(ventana_menu, text="INICIAR PARTIDA", width=25, height=2, font=("Arial", 12, "bold"), bg="#911C75", fg="white", command=ir_a_juego_base)
 btn_play.pack(pady=10)
 
 #Botón para ir a ajustes
