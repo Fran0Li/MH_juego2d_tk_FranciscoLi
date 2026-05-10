@@ -43,9 +43,134 @@ def volver_al_menu_desde_juego():
     ventana_menu.deiconify() # Muestra el menú de nuevo
 
 
-def ir_a_editor():
+def ir_a_editor():#Funcion para llamar a la ventana del editor de mapas
     ventana_menu.withdraw()
-    print("Abriendo Editor...") # Aquí luego llamarás a lanzar_ventana_editor()
+    lanzar_ventana_editor()
+
+#Sistemas para las puntuaciones
+def guardar_puntajes (puntos_finales):
+    # with open para abrir archivo y cerrarlo
+    with open("scores.txt", "a") as f:# a es de append (añadir): va escribiendo sin borrar lo de antes
+        f.write(f"Puntaje: {puntos_finales}\n") #Escribe el texto (/n: salto de linea)
+def mostrar_puntos():
+    #ventana para visualizar records
+    v_records = tk.Toplevel()
+    v_records.title("Cazadores Leyenda")
+    v_records.geometry("300x400")
+
+    tk.Label(v_records, text="HISTORIAL DE PUNTOS", font=("Arial", 16, "bold")).pack(pady=10)
+    
+    # El bloque try-except evita que el programa se cierre si el archivo aún no existe
+    try:
+        with open("scores.txt", "r") as f: # "r" de 'read' (leer)
+            contenido = f.read()
+            if not contenido: 
+                contenido = "No hay puntajes registrados."
+    except FileNotFoundError:
+        # Si el archivo no existe todavía, muestra este mensaje
+        contenido = "Aún no has jugado ninguna partida."
+        
+    # Widget para ver puntajes con srcoll
+    text_area = tk.Text(v_records, height=15, width=30)
+    text_area.insert(tk.END, contenido) # Mete el texto del archivo en el widget
+    text_area.config(state="disabled")  # 'disabled' hace que el usuario no pueda borrar los puntos
+    text_area.pack(pady=10)
+    
+    tk.Button(v_records, text="Cerrar", command=v_records.destroy).pack()
+
+#Lógica del Editor de mapas
+def click_editor(event):
+    # Ajuste a la cuadrícula de 20x20 para precisión
+    x = (event.x // 20) * 20
+    y = (event.y // 20) * 20
+    ancho, alto = 100, 20
+    
+    # Dibujamos el bloque naranja en el editor para verlo
+    canvas_editor.create_rectangle(x, y, x + ancho, y + alto, fill="orange", outline="white")
+    
+    # Guarda los datos en nuestra lista global para poder usarlos en el juego
+    # El formato es: [x, y, ancho, alto, ID, color]
+    nuevo_bloque = [x, y, ancho, alto, None, "orange"]
+    bloques_creados_editor.append(nuevo_bloque)
+    
+    # Imprimimos en consola por si quieres copiar el código después
+    print(f"Bloque guardado: {nuevo_bloque}")
+
+def lanzar_ventana_editor():
+    global ventana_editor, canvas_editor
+    ventana_editor = tk.Toplevel() 
+    ventana_editor.title("Editor de Mapas - Murcian Hunter")
+    ventana_editor.geometry(f"{ANCHO_VP}x{ALTO_VP}")
+    
+    # Crea el Canvas
+    canvas_editor = tk.Canvas(ventana_editor, width=ANCHO_VP, height=ALTO_VP)
+    canvas_editor.pack()
+    
+    # Fondo igual juego 
+    canvas_editor.create_image(0, 0, image=img_fondo, anchor="nw")
+    
+    # Instrucción visual
+    canvas_editor.create_text(400, 20, text="MODO EDITOR: Haz clic para colocar plataformas", fill="white", font=("Arial", 12, "bold"))
+
+    # Evento de clic
+    canvas_editor.bind("<Button-1>", click_editor)
+    
+    # Funcion para jugar con el mapa
+    def probar_mapa_creado():
+        if not bloques_creados_editor:
+            print("¡Crea al menos una plataforma antes de probar!")
+            return
+        
+        # Sobrescribe la lista de plataformas del juego con las del editor
+        global plataformas
+        plataformas = bloques_creados_editor
+        
+        # Cierra editor y lanza el juego con la música
+        ventana_editor.destroy()
+        ir_a_juego() # Esta función ya pone la música y abre el juego
+
+    # Botones del editor
+    btn_probar = tk.Button(ventana_editor, text="PROBAR NIVEL", bg="green", fg="white", command=probar_mapa_creado)
+    canvas_editor.create_window(100, 50, window=btn_probar)
+
+    btn_salir = tk.Button(ventana_editor, text="Guardar y Salir", command=lambda: [ventana_editor.destroy(), ventana_menu.deiconify()])
+    canvas_editor.create_window(700, 50, window=btn_salir)
+
+
+
+#Pantalla final Game over o Victoria
+def mostrar_pantalla_final(mensaje, color, puntos_finales):
+    guardar_puntajes(puntos_finales)
+    global ventana
+    # se detiene juego y música
+    py.mixer.music.stop()
+    
+    #Oculta ventana de juego
+    ventana.withdraw()
+
+    # Ventana de resultado
+    v_final = tk.Toplevel()
+    v_final.title("Fin de la Partida")
+    v_final.geometry("400x300")
+    v_final.configure(bg=color)
+    v_final.resizable(False, False)
+    
+    # Centra textos
+    tk.Label(v_final, text=mensaje, font=("Impact", 35), bg=color, fg="white").pack(pady=30)
+    tk.Label(v_final, text=f"Puntaje Obtenido: {puntos_finales}", font=("Arial", 16, "bold"), bg=color, fg="white").pack(pady=10)
+    
+    def cerrar_y_regresar():
+        v_final.destroy()
+        ventana.destroy()        # Cierra el juego
+        ventana_menu.deiconify() # Muestra el menú
+        # Reinicia música del menú
+        py.mixer.music.load("MH_menuTheme.mp3")
+        py.mixer.music.play(-1)
+
+    tk.Button(v_final, text="Volver al Menú", font=("Arial", 12, "bold"), command=cerrar_y_regresar).pack(pady=30)
+    
+    # Bloquear el juego de fondo
+    v_final.grab_set()
 
 #Constantes para la ventana
 ANCHO_VP = 800 #ancho de la ventana principal
@@ -117,6 +242,8 @@ contador_frames = [0] #para simular azar
 enemigos =[ [400, 540, 30, 30, 1, None, "red"], [200, 250, 30, 30, 2, None, "purple"]]
 vidas = [3]#Lista mutable para vidas
 
+#Variables para el editor
+bloques_creados_editor = [] #Aquí se guardan los bloques
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False, "Down": False}
@@ -218,7 +345,9 @@ def coli_enemigos(canvas, lista_e, h_pos, vidas_l, puntos_l, txt_puntos, txt_vid
             h_pos[0], h_pos[1], h_pos[2] = 100, 100, 0
 
             if vidas_l[0] <= 0:#Si la vida llega a cero
-                print("GAME OVER")
+                # Llama a la pantalla roja de Game Over
+                mostrar_pantalla_final("GAME OVER", "#5E0000", puntos_l[0])
+                return # Detiene la ejecución de la colisión
 
 
 
@@ -324,15 +453,17 @@ def mover_hunter():
     if (hunter [0] < meta[0] + meta[2] and hunter[0] + 30 > meta[0] and
         hunter [1] < meta[1] + meta[3]  and hunter[1] + 40 > meta[1]):# Revisa si el rectangulo de hunter y la meta se tocan
         print("NIVEL COMPLETADOO:)")# aparece en la consola
-        #Al ganar, hunter vuelve al inicio
-        hunter[0] = 100#coordenada en x
-        hunter[1] = 100#coordenada en y
-        hunter[2] = 0#velocidad vertical se reinicia
+        # Llama a la pantalla verde de Victoria
+        mostrar_pantalla_final("¡VICTORIA!", "#1B4D3E", puntos[0])
+        # Resetea posicion por si acaso
+        hunter[0], hunter[1], hunter[2] = 100, 100, 0
 
 
 #Animacion en ventana
 
 def animove():
+    if vidas[0] <= 0:# Si se acaban las vidas deja de ejecutar el bucle del juego
+        return
     mover_hunter() # Ejecuta la lógica de movimiento y salto
     # Lógica de Cambio imagen de Hunter según dirección
     if not hunter[3]: # Si no está en el suelo
@@ -428,6 +559,7 @@ def abrir_ventana_juego():
     canvas.focus_set() #Para no tener q dar click
     animove()
 
+#Ventana del Main menu
 ventana_menu = tk.Tk()
 ventana_menu.title("Murcial Hunter - menu")
 ventana_menu.geometry("400x500")
@@ -466,5 +598,9 @@ btn_ajustes_menu.pack(pady=5)
 # El botón del Editor (luego haremos su función)
 btn_editor = tk.Button(ventana_menu, text="EDITOR DE MAPAS", width=25, height=2, font=("Arial", 10), command=ir_a_editor)
 btn_editor.pack(pady=10)
+
+#Botón de los records de puntos
+btn_scores = tk.Button(ventana_menu, text="VER PUNTUACIONES", width=25, command=mostrar_puntos)
+btn_scores.pack(pady=10)
 
 ventana_menu.mainloop()
