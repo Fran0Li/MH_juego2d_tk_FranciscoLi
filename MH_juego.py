@@ -3,6 +3,7 @@ import pygame as py#importación de la librería pygame para el audio
 
 # Funciones de control de  ventanas
 def ir_a_juego():
+    es_mapa_personalizado[0] = False#Para el editor por si es ese
     ventana_menu.withdraw()  # Oculta el menú
     #Musica de juego
     py.mixer.music.stop()
@@ -83,24 +84,38 @@ def click_editor(event):
     # Ajuste a la cuadrícula de 20x20 para precisión
     x = (event.x // 20) * 20
     y = (event.y // 20) * 20
-    ancho, alto = 100, 20
+    p_act = pantalla_edicion[0]
+    if tipo_seleccionado[0] == "plataforma":
+        ancho, alto = 100, 20
     
-    # Dibujamos el bloque naranja en el editor para verlo
-    canvas_editor.create_rectangle(x, y, x + ancho, y + alto, fill="orange", outline="white")
-    
-    # Guarda los datos en nuestra lista global para poder usarlos en el juego
-    # El formato es: [x, y, ancho, alto, ID, color]
-    nuevo_bloque = [x, y, ancho, alto, None, "orange"]
-    bloques_creados_editor.append(nuevo_bloque)
-    
-    # Imprimimos en consola por si quieres copiar el código después
-    print(f"Bloque guardado: {nuevo_bloque}")
+        # Dibujam el bloque naranja en el editor para verlo
+        canvas_editor.create_rectangle(x, y, x + ancho, y + alto, fill="orange", outline="white")
+
+        # Guarda los datos en lista, en la pantalla correspondiente para poder usarlos en el juego
+        mapa_personalizado[p_act]["plataformas"].append([x, y, ancho, alto, None, "orange"])   
+    elif tipo_seleccionado[0] == "escalera":#Lo mismo pero con la escalera
+        ancho, alto = 30, 100
+        canvas_editor.create_rectangle(x, y, x + ancho, y + alto, fill="#7F611F", outline="white", stipple="gray50")
+        mapa_personalizado[p_act]["escaleras"].append([x, y, ancho, alto, None, "#7F611F"])
+    elif tipo_seleccionado[0] == "enemigo":
+        # Se eleije imagen
+        imagen_a_usar = img_enemigo_rojo if tipo_denemigo[0] == 1 else img_enemigo_sombra
+        # Dibuja el sprite real en el editor para que sepa cuál puso
+        canvas_editor.create_image(x, y, image=imagen_a_usar, anchor="nw")
+    #Guarda[x, y, ancho, alto, tipo (1 o 2), ID_canvas, color/tag]
+        mapa_personalizado[p_act]["enemigos"].append([x, y, 30, 30, tipo_denemigo[0], None, "enemigo"])
+    elif tipo_seleccionado[0] == "meta":
+        ancho, alto = 40, 40
+        # Dibuja un círculo cian para representar la meta en el editor
+        canvas_editor.create_oval(x, y, x + ancho, y + alto, fill="cyan", outline="yellow", width=2)
+        # Guarda la posición en lista de metas
+        meta_personalizada[p_act] = [x, y, ancho, alto, None]
 
 def lanzar_ventana_editor():
     global ventana_editor, canvas_editor
     ventana_editor = tk.Toplevel() 
     ventana_editor.title("Editor de Mapas - Murcian Hunter")
-    ventana_editor.geometry(f"{ANCHO_VP}x{ALTO_VP}")
+    ventana_editor.geometry(f"{ANCHO_VP}x{ALTO_VP + 120}") #Extra de espacio para los botones
     
     # Crea el Canvas
     canvas_editor = tk.Canvas(ventana_editor, width=ANCHO_VP, height=ALTO_VP)
@@ -114,23 +129,53 @@ def lanzar_ventana_editor():
 
     # Evento de clic
     canvas_editor.bind("<Button-1>", click_editor)
+
+    #Panel de objetos y pantallas
+    #Se usa frame para agrupar los botones
+    #Se utiliza setitem en esta seccion para modificar elementos dentro de la lista con ayuda de lambda no se puede usar =, cambia indices
+    frame_objetos = tk.Frame(ventana_editor, bg="#2c3e50", pady=5)
+    frame_objetos.pack(fill="x")
     
+    tk.Label(frame_objetos, text="CONSTRUCCIÓN:", fg="white", bg="#2c3e50", font=("Arial", 10, "bold")).pack(side="left", padx=10)
+    
+    # Cambia la variable 'tipo_seleccionado' para que el clic sepa qué dibujar
+    tk.Button(frame_objetos, text="BLOQUE", width=12, command=lambda: tipo_seleccionado.__setitem__(0, "plataforma")).pack(side="left", padx=5)
+    tk.Button(frame_objetos, text="ESCALERA", width=12, command=lambda: tipo_seleccionado.__setitem__(0, "escalera")).pack(side="left", padx=5)
+    
+    tk.Label(frame_objetos, text=" | EDITAR:", fg="white", bg="#2c3e50").pack(side="left", padx=5)
+    
+    #Botones para alternar en que pantalla se guardan los datos
+    tk.Button(frame_objetos, text="PANTALLA 1", bg="#34495e", fg="white", command=lambda: [pantalla_edicion.__setitem__(0, 1), print("Editando P1")]).pack(side="left", padx=2)
+    tk.Button(frame_objetos, text="PANTALLA 2", bg="#34495e", fg="white", command=lambda: [pantalla_edicion.__setitem__(0, 2), print("Editando P2")]).pack(side="left", padx=2)
+
+    #Boton para poner meta
+    tk.Button(frame_objetos, text="META", width=12, bg="cyan", command=lambda: tipo_seleccionado.__setitem__(0, "meta")).pack(side="left", padx=5)
+
+    #Panel de enemigos
+    frame_enemigos = tk.Frame(ventana_editor, bg="#34495e", pady=5)
+    frame_enemigos.pack(fill="x")
+    tk.Label(frame_enemigos, text="ENEMIGOS:", fg="white", bg="#34495e", font=("Arial", 10, "bold")).pack(side="left", padx=10)
+    
+    # Al elegir enemigo, se define el 'tipo_seleccionado' y el 'tipo_denemigo' (1:Rojo, 2:Sombra)
+    tk.Button(frame_enemigos, text="BAT ROJO", bg="#e74c3c", fg="white", command=lambda: [tipo_seleccionado.__setitem__(0, "enemigo"), tipo_denemigo.__setitem__(0, 1)]).pack(side="left", padx=5)
+    tk.Button(frame_enemigos, text="BAT SOMBRA", bg="#8e44ad", fg="white", command=lambda: [tipo_seleccionado.__setitem__(0, "enemigo"), tipo_denemigo.__setitem__(0, 2)]).pack(side="left", padx=5)
+
     # Funcion para jugar con el mapa
-    def probar_mapa_creado():
-        if not bloques_creados_editor:
-            print("¡Crea al menos una plataforma antes de probar!")
-            return
-        
-        # Sobrescribe la lista de plataformas del juego con las del editor
-        global plataformas
-        plataformas = bloques_creados_editor
-        
+    def probar_mapa_pro():
+        es_mapa_personalizado[0] = True #activa el interruptor para cargar pantalla uando el del editor
+        game_state["pantalla_actual"] = 1 #Resetea a la pantalla 1
+        # carga de los datos del editor a las listas activas
+        global plataformas, escaleras, enemigos
+        plataformas = mapa_personalizado[1]["plataformas"]
+        escaleras = mapa_personalizado[1]["escaleras"]
+        enemigos = mapa_personalizado[1]["enemigos"]
+
         # Cierra editor y lanza el juego con la música
         ventana_editor.destroy()
         ir_a_juego() # Esta función ya pone la música y abre el juego
 
     # Botones del editor
-    btn_probar = tk.Button(ventana_editor, text="PROBAR NIVEL", bg="green", fg="white", command=probar_mapa_creado)
+    btn_probar = tk.Button(ventana_editor, text="PROBAR NIVEL", bg="green", fg="white", command=probar_mapa_pro)
     canvas_editor.create_window(100, 50, window=btn_probar)
 
     btn_salir = tk.Button(ventana_editor, text="Guardar y Salir", command=lambda: [ventana_editor.destroy(), ventana_menu.deiconify()])
@@ -244,6 +289,16 @@ vidas = [3]#Lista mutable para vidas
 
 #Variables para el editor
 bloques_creados_editor = [] #Aquí se guardan los bloques
+# Donde se  guardará la estructura del mapa creado por el usuario
+mapa_personalizado = {
+    1: {"plataformas": [], "escaleras": [], "enemigos": []},
+    2: {"plataformas": [], "escaleras": [], "enemigos": []}
+}
+es_mapa_personalizado = [False]  # Interruptor para saber qué lógica de niveles usar
+pantalla_edicion = [1]           # Indica si esta editando la pantalla 1 o la 2
+tipo_seleccionado = ["plataforma"] # Lo que el usuario está colocando actualmente
+tipo_denemigo = [1] #1 el rojo, 2 la sombra
+meta_personalizada = {1: [None], 2: [None]} # Para guardar la meta de cada pantalla
 
 #interruptores de las teclas para un movimiento fluido 
 teclas = {"Left": False, "Right": False, "space": False, "Down": False}
@@ -273,25 +328,52 @@ def detener_key(event):#Funcion para detener el interruptor
 
 #Función para cargar mas pantallas en el nivel predeterminado
 def cargar_npantalla(num):
-    global plataformas, escaleras
+    global plataformas, escaleras, enemigos, meta
 
     #Limpiar canvas
     for p in plataformas:
         canvas.delete(p[4])
     for e in escaleras:
         canvas.delete(e[4])
+    for en in enemigos: canvas.delete(en[5])
+    if meta[4]: canvas.delete(meta[4]) # Borra meta vieja
+
+    #Condicion para determinar si es el predeterminado o nivel del editor
+    #Si  entra por iniciar partida sera Flase y se usa nivel predeterminado
+    if es_mapa_personalizado[0]:
+        fuente = mapa_personalizado
+        datos_meta = meta_personalizada[num] #Usa meta del editor
+    else:
+        fuente = pantallas
+        #En el nivel predeterminado, meta solo en pantalla 2
+        datos_meta = [650, 250, 30, 30, None] if num == 2 else [None]
+
     #nuevos datos
-    plataformas  = pantallas[num]["plataformas"]
-    escaleras = pantallas[num]["escaleras"]
+    plataformas  = fuente[num]["plataformas"]
+    escaleras = fuente[num]["escaleras"]
+    #.get en caso de que no haya enemigos definidos
+    enemigos = fuente[num].get("enemigos", [])
     #se dibujan las nuevas plataformas y escaleras con ciclos
     for p in plataformas:
         p[4] = canvas.create_rectangle(p[0], p[1], p[0]+p[2], p[1]+p[3], fill=p[5], outline="white")
     for e in escaleras:
         e[4] = canvas.create_rectangle(e[0], e[1], e[0]+e[2], e[1]+e[3], fill=e[5], outline="white", stipple="gray50")
-    if num == 2:# control de la meta, se esconde en una pantalla pero se muestra en la otra
-        canvas.itemconfig(meta[4], state="normal") # se vuelve visible en la segunda pantalla
+    for en in enemigos:
+        # Se asigna (Rojo o Sombra) basado en el tipo (en[4])
+        img_a_dibujar = img_enemigo_rojo if en[4] == 1 else img_enemigo_sombra
+        en[5] = canvas.create_image(en[0], en[1], image=img_a_dibujar, anchor="nw")
+   
+    #dibuja meta si existe en la pantalla
+    if datos_meta[0] is not None:
+        meta[0], meta[1], meta[2], meta[3] = datos_meta[0], datos_meta[1], datos_meta[2], datos_meta[3]
+        meta[4] = canvas.create_oval(meta[0], meta[1], meta[0]+meta[2], meta[1]+meta[3], fill="cyan", outline="yellow")
+    
+    # Control de la meta (solo se muestra en la pantalla 2 si es el nivel normal)
+    if not es_mapa_personalizado[0] and num == 2:
+        canvas.itemconfig(meta[4], state="normal")
     else:
-        canvas.itemconfig(meta[4], state="hidden")# oculta en la primer pantalla
+        canvas.itemconfig(meta[4], state="hidden")#Se oculta la meta si esta en la primer pantalla
+
 
 #Lógica del mov!! y colisiones
 
@@ -429,7 +511,7 @@ def mover_hunter():
         # Se aumenta el contador de pantalla para pasar a la segunda
         game_state["pantalla_actual"] += 1
         
-        if game_state["pantalla_actual"] in pantallas:# si la pantalla existe, se carga
+        if game_state["pantalla_actual"] in [1, 2]:# si la pantalla existe, se carga
             cargar_npantalla(game_state["pantalla_actual"])
             canvas.configure(bg="#000000")
             print(f"Cambio de zona: {game_state['pantalla_actual']}")
@@ -444,11 +526,19 @@ def mover_hunter():
             hunter[0] = 0#frena 
 
     #Lógica reset por caídaa (por si se implementan huecos)
+    # Lógica reset por caída (dentro de mover_hunter)
     if hunter[1] > ALTO_VP:
-        hunter[0] = 100 # De nuevo a la x inicial
-        hunter[1] = 100 # De nuevo a la y inicial
-        hunter[2] = 0 #Su velocidad de caída se vuelve a 0 para que no siga sumando la vel vertical
-        hunter[3] = False # empieza en el aire
+        vidas[0] -= 1 # Resta una vida al contador
+        canvas.itemconfig(texto_vidas, text=f"Vidas: {vidas[0]}") # Actualiza el texto en pantalla
+        
+        # Si se queda sin vidas, lanza la pantalla de Game Over
+        if vidas[0] <= 0:
+            mostrar_pantalla_final("GAME OVER", "#5E0000", puntos[0])
+            return
+
+        # Reseteo de posición y física del personaje en una sola línea
+        hunter[0], hunter[1], hunter[2] = 100, 100, 0 # X inicial, Y inicial, Vy a cero
+        hunter[3] = False # Empieza en el aire (no está en el suelo)
     #Colisión con meta
     if (hunter [0] < meta[0] + meta[2] and hunter[0] + 30 > meta[0] and
         hunter [1] < meta[1] + meta[3]  and hunter[1] + 40 > meta[1]):# Revisa si el rectangulo de hunter y la meta se tocan

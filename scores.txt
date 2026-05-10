@@ -1,1 +1,4 @@
 Puntaje: 0
+Puntaje: 0
+Puntaje: 20
+Puntaje: 0
