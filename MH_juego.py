@@ -1,21 +1,52 @@
 import tkinter as tk#importación de la librería tkinter y se nombra como tk
 import pygame as py#importación de la librería pygame para el audio
 
-# Funciones de ventanas
+# Funciones de control de  ventanas
 def ir_a_juego():
     ventana_menu.withdraw()  # Oculta el menú
+    #Musica de juego
+    py.mixer.music.stop()
+    py.mixer.music.load("MH_Theme.mp3") # Pon aquí el nombre de tu otra canción
+    py.mixer.music.play(-1)
     abrir_ventana_juego()
 
+def abrir_ventana_ajustes():
+    ventana_ajustes = tk.Toplevel()
+    ventana_ajustes.title("Ajustes")
+    ventana_ajustes.geometry("300x200")
+    ventana_ajustes.focus_set()#se queda al frente
+    ventana_ajustes.grab_set()
+    tk.Label(ventana_ajustes, text="PANEL DE CONTROL", font=("Arial", 14, "bold")).pack(pady=10)
+
+    def alternar_musica():#Función para manejo de música en ajustes
+        if py.mixer.music.get_busy():
+            py.mixer.music.pause()
+            btn_musica.config(text="Reanudar Música")
+        else:
+            py.mixer.music.unpause()
+            btn_musica.config(text="Pausar Música")
+    btn_musica = tk.Button(ventana_ajustes, text="Pausar/Reanudar Música", command=alternar_musica, width=20) #Botón para alternar música
+    btn_musica.pack(pady=10)
+
+    # Botón para cerrar solo los ajustes
+    tk.Button(ventana_ajustes, text="Cerrar", command=ventana_ajustes.destroy).pack(pady=10)
+
+
 def volver_al_menu_desde_juego():
+    # Volver a música de menú
+    py.mixer.music.stop()
+    py.mixer.music.load("MH_menuTheme.mp3")
+    py.mixer.music.play(-1)
     # Esta función se asegura de limpiar todo antes de volver
     global ventana
     ventana.destroy()        # Cierra la ventana del juego
     ventana_menu.deiconify() # Muestra el menú de nuevo
 
+
 def ir_a_editor():
     ventana_menu.withdraw()
     print("Abriendo Editor...") # Aquí luego llamarás a lanzar_ventana_editor()
-   
+
 #Constantes para la ventana
 ANCHO_VP = 800 #ancho de la ventana principal
 ALTO_VP = 600 #alto de la ventana prrincipal
@@ -369,6 +400,9 @@ def abrir_ventana_juego():
     #Dibujar la meta
     meta[4] = canvas.create_oval(meta[0], meta[1], meta[0] + meta[2], meta[1] + meta[3], fill="cyan", outline="yellow", state="hidden")
 
+    btn_config = tk.Button(ventana, text="⚙️", font=("Arial", 12), command=abrir_ventana_ajustes)#Botón de ajustes
+    canvas.create_window(780, 30, window=btn_config)
+
     #Binds, son la vinculacion de eventos conecta las teclas fisicas con las funciones del programa
     ventana.bind("<KeyPress-Left>", izquier)#Vincula flecha izq para que active función izquier
     ventana.bind("<KeyPress-Right>", derecha)#Vincula flecha der para que active función derecha
@@ -382,7 +416,7 @@ def abrir_ventana_juego():
     ventana.bind("<KeyRelease>", detener_key)#al activarse, la funcion detener_key revisa cual fue y apaga el interruptor
 
     #Dibuja marcador de puntos en esquina
-    texto_puntos = canvas.create_text(700, 30, text="Puntos:  0", fill="white", font=("Arial", 16, "bold"))
+    texto_puntos = canvas.create_text(650, 30, text="Puntos:  0", fill="white", font=("Arial", 16, "bold"))
     texto_vidas = canvas.create_text(100, 30, text="Vidas: 3", fill="red", font=("Arial", 18, "bold"))
     # Botón de "Volver" dentro del juego (opcional si ya usas la X de la ventana)
     btn_regresar = tk.Button(ventana, text="Volver al Menú", command=volver_al_menu_desde_juego)
@@ -391,7 +425,7 @@ def abrir_ventana_juego():
     ventana.focus_set()          # Reclama el foco para la ventana
     ventana.grab_set()           # Bloquea eventos en otras ventanas hasta que esta se cierre
     ventana.attributes("-topmost", True) # Asegura que esté por encima de todo
-    
+    canvas.focus_set() #Para no tener q dar click
     animove()
 
 ventana_menu = tk.Tk()
@@ -411,15 +445,23 @@ img_enemigo_sombra = tk.PhotoImage(file="Shadow_enemy2.png")# enemigo 2
 
 #Cargar música 
 py.mixer.init()
-py.mixer.music.load("tu_musica.mp3")
+py.mixer.music.load("MH_menuTheme.mp3")
+py.mixer.music.play(-1)#suena hasta que se apague
+
 
 # Elementos del Menú
 title = tk.Label(ventana_menu, text="MURCIAN HUNTER", font=("Impact", 28))
 title.pack(pady=40)
 
+
+
 # El botón "INICIAR PARTIDA" llama a ir_a_juego para ocultar el menú
 btn_play = tk.Button(ventana_menu, text="INICIAR PARTIDA", width=25, height=2, font=("Arial", 12, "bold"), bg="#911C75", fg="white", command=ir_a_juego)
 btn_play.pack(pady=10)
+
+#Botón para ir a ajustes
+btn_ajustes_menu = tk.Button(ventana_menu, text="AJUSTES", width=20, command=abrir_ventana_ajustes)
+btn_ajustes_menu.pack(pady=5)
 
 # El botón del Editor (luego haremos su función)
 btn_editor = tk.Button(ventana_menu, text="EDITOR DE MAPAS", width=25, height=2, font=("Arial", 10), command=ir_a_editor)
