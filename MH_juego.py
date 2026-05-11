@@ -7,7 +7,7 @@ def ir_a_juego():
     ventana_menu.withdraw()  # Oculta el menú
     #Musica de juego
     py.mixer.music.stop()
-    py.mixer.music.load("MH_Theme.mp3") # Pon aquí el nombre de tu otra canción
+    py.mixer.music.load("musica/MH_Theme.mp3") # Pon aquí el nombre de tu otra canción
     py.mixer.music.play(-1)
     abrir_ventana_juego()
 
@@ -40,7 +40,7 @@ def abrir_ventana_ajustes():
 def volver_al_menu_desde_juego():
     # Volver a música de menú
     py.mixer.music.stop()
-    py.mixer.music.load("MH_menuTheme.mp3")
+    py.mixer.music.load("musica/MH_menuTheme.mp3")
     py.mixer.music.play(-1)
     # Esta función se asegura de limpiar todo antes de volver
     global ventana
@@ -111,9 +111,11 @@ def click_editor(event):
 
         # Guarda los datos en lista, en la pantalla correspondiente para poder usarlos en el juego
         mapa_personalizado[p_act]["plataformas"].append([x, y, ancho, alto, None, "orange"])   
-    elif tipo_seleccionado[0] == "escalera":#Lo mismo pero con la escalera
-        ancho, alto = 30, 100
-        canvas_editor.create_rectangle(x, y, x + ancho, y + alto, fill="#7F611F", outline="white", stipple="gray50")
+    elif tipo_seleccionado[0] == "escalera":
+        ancho, alto = 30, 100  # dimensiones de un tile
+        tile_alto = 100
+        for ty in range(y, y + alto, tile_alto):
+            canvas_editor.create_image(x, ty, image=img_escalera, anchor="nw")
         mapa_personalizado[p_act]["escaleras"].append([x, y, ancho, alto, None, "#7F611F"])
     elif tipo_seleccionado[0] == "enemigo":
         # Se eleije imagen
@@ -216,7 +218,11 @@ def mostrar_pantalla_final(mensaje, color, puntos_finales):
     global ventana
     # se detiene juego y música
     py.mixer.music.stop()
-    
+    if mensaje == "¡VICTORIA!":
+        py.mixer.music.load("musica/Victory_MH_Theme.mp3")
+    else:
+        py.mixer.music.load("musica/Game_over_Theme.mp3")
+    py.mixer.music.play() # suena una vez
     #Oculta ventana de juego
     ventana.withdraw()
 
@@ -241,7 +247,7 @@ def mostrar_pantalla_final(mensaje, color, puntos_finales):
         game_state["pantalla_actual"] = 1
         ventana_menu.deiconify() # Muestra el menú
         # Reinicia música del menúddwadd
-        py.mixer.music.load("MH_menuTheme.mp3")
+        py.mixer.music.load("musica/MH_menuTheme.mp3")
         py.mixer.music.play(-1)
 
     tk.Button(v_final, text="Volver al Menú", font=("Arial", 12, "bold"), command=cerrar_y_regresar).pack(pady=30)
@@ -285,7 +291,7 @@ pantallas = {
             [300, 450, 200, 20, None, "#2b1d0e"]
         ],
         "escaleras": [ # lista de escaleras de la primer pantalla
-            [350, 350, 30, 230, None, "#7F611F"] # Escalera del nivel 1
+            [350, 350, 30, 200, None, "#7F611F"] # Escalera del nivel 1
         ]
     },
     2: {
@@ -294,8 +300,8 @@ pantallas = {
             [200, 300, 400, 20, None, "blue"]
         ],
         "escaleras": [ # lista de las escaleras de la segunda pantalla
-            [100, 200, 30, 380, None, "#7F611F"], # Escalera diferente para nivel 2
-            [600, 200, 30, 380, None, "#7F611F"]  
+            [100, 200, 30, 300, None, "#7F611F"], # Escalera diferente para nivel 2
+            [600, 200, 30, 300, None, "#7F611F"]  
             ]}}
 
 #Para el inicio
@@ -365,7 +371,11 @@ def cargar_npantalla(num):
     for p in plataformas:
         canvas.delete(p[4])
     for e in escaleras:
-        canvas.delete(e[4])
+        if isinstance(e[4], list):
+            for eid in e[4]:
+                canvas.delete(eid)
+        elif e[4]:
+            canvas.delete(e[4])
     for en in enemigos: canvas.delete(en[5])
     if meta[4]: canvas.delete(meta[4]) # Borra meta vieja
 
@@ -388,7 +398,11 @@ def cargar_npantalla(num):
     for p in plataformas:
         p[4] = canvas.create_rectangle(p[0], p[1], p[0]+p[2], p[1]+p[3], fill=p[5], outline="white")
     for e in escaleras:
-        e[4] = canvas.create_rectangle(e[0], e[1], e[0]+e[2], e[1]+e[3], fill=e[5], outline="white", stipple="gray50")
+        tile_alto = 100  # alto de  sprite
+        ids = []
+        for ty in range(e[1], e[1] + e[3], tile_alto):
+            ids.append(canvas.create_image(e[0], ty, image=img_escalera, anchor="nw"))
+        e[4] = ids  # guarda lista de IDs
     for en in enemigos:
         # Se asigna (Rojo o Sombra) basado en el tipo (en[4])
         img_a_dibujar = img_enemigo_rojo if en[4] == 1 else img_enemigo_sombra
@@ -634,8 +648,11 @@ def abrir_ventana_juego():
         p[4] = canvas.create_rectangle(p[0], p[1], p[0] + p[2], p[1] + p[3], fill= p[5], outline="White")#Asigna también colores
     #Dibujar escaleras
     for e in escaleras:
-        # e[0]=x, e[1]=y, e[2]=ancho, e[3]=alto, e[5]=color
-        e[4] = canvas.create_rectangle(e[0], e[1], e[0] + e[2], e[1] + e[3], fill=e[5], outline="white", stipple="gray50" )#stipple para dar el efecto de rejilla!
+        tile_alto = 100  # alto de sprite
+        ids = []
+        for ty in range(e[1], e[1] + e[3], tile_alto):
+            ids.append(canvas.create_image(e[0], ty, image=img_escalera, anchor="nw"))
+        e[4] = ids  # guarda lista de IDs
 
     # Dibujar Enemigos con imagen
     for en in enemigos:
@@ -697,41 +714,43 @@ ventana_menu.geometry("400x500")
 ventana_menu.resizable(False,False)
 
 #Carga de imagenes (sprites)
-img_hunter_der = tk.PhotoImage(file="Hunter_right1.png") #Imagen de personaje viendo a la der
-img_hunter_izq = tk.PhotoImage(file="Hunter_left.png")# viendo a la izq
-img_hunter_jump_der = tk.PhotoImage(file="Hunter_up_right1.png")
-img_hunter_jump_izq = tk.PhotoImage(file="Hunter_up_left.png")
-img_fondo = tk.PhotoImage(file="game_background.png")# fondo de nivel
-img_moneda = tk.PhotoImage(file="Bat_coin.png")# img de bat_coins
-img_enemigo_rojo = tk.PhotoImage(file="Red_bat_enemy1.png")# Enemigo 1
-img_enemigo_sombra = tk.PhotoImage(file="Shadow_enemy2.png")# enemigo 2
+img_hunter_der = tk.PhotoImage(file="img/Hunter_right1.png")# hunter der
+img_hunter_izq = tk.PhotoImage(file="img/Hunter_left.png")# hunter izq
+img_hunter_jump_der = tk.PhotoImage(file="img/Hunter_up_right1.png")#hunter salto der
+img_hunter_jump_izq = tk.PhotoImage(file="img/Hunter_up_left.png")#hunter salto izq
+img_fondo = tk.PhotoImage(file="img/game_background.png")# fondo juego
+img_moneda = tk.PhotoImage(file="img/Bat_coin.png")# Murcielago amarillo de puntos
+img_enemigo_rojo = tk.PhotoImage(file="img/Red_bat_enemy1.png") #Enemigo rojo
+img_enemigo_sombra = tk.PhotoImage(file="img/Shadow_enemy2.png") #Enemigo sombra
+img_escalera = tk.PhotoImage(file="img/Escalera_MH.png") #Escalera
+img_fondo_menu = tk.PhotoImage(file="img/menu_background.png")# Menu fondo
 
 #Cargar música 
 py.mixer.init()
-py.mixer.music.load("MH_menuTheme.mp3")
+py.mixer.music.load("musica/MH_menuTheme.mp3")
 py.mixer.music.play(-1)#suena hasta que se apague
 
 
-# Elementos del Menú
-title = tk.Label(ventana_menu, text="MURCIAN HUNTER", font=("Impact", 28))
-title.pack(pady=40)
+# Canvas como base del menú
+canvas_menu = tk.Canvas(ventana_menu, width=400, height=500)
+canvas_menu.pack()
+canvas_menu.create_image(0, 0, image=img_fondo_menu, anchor="nw")  # fondo
 
+# Título encima del fondo
+canvas_menu.create_text(200, 60, text="MURCIAN HUNTER", font=("Impact", 28), fill="white")
 
-
-# El botón "INICIAR PARTIDA" llama a ir_a_juego para ocultar el menú
+# Botones con create_window para ponerlos sobre el canvas
 btn_play = tk.Button(ventana_menu, text="INICIAR PARTIDA", width=25, height=2, font=("Arial", 12, "bold"), bg="#911C75", fg="white", command=ir_a_juego_base)
-btn_play.pack(pady=10)
+canvas_menu.create_window(200, 180, window=btn_play)
 
-#Botón para ir a ajustes
 btn_ajustes_menu = tk.Button(ventana_menu, text="AJUSTES", width=20, command=abrir_ventana_ajustes)
-btn_ajustes_menu.pack(pady=5)
+canvas_menu.create_window(200, 260, window=btn_ajustes_menu)
 
-# El botón del Editor (luego haremos su función)
 btn_editor = tk.Button(ventana_menu, text="EDITOR DE MAPAS", width=25, height=2, font=("Arial", 10), command=ir_a_editor)
-btn_editor.pack(pady=10)
+canvas_menu.create_window(200, 340, window=btn_editor)
 
-#Botón de los records de puntos
 btn_scores = tk.Button(ventana_menu, text="VER PUNTUACIONES", width=25, command=mostrar_puntos)
-btn_scores.pack(pady=10)
+canvas_menu.create_window(200, 420, window=btn_scores)
+
 
 ventana_menu.mainloop()

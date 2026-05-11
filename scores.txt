@@ -28,3 +28,16 @@ Puntaje: 20
 Puntaje: 0
 Puntaje: 10
 Puntaje: 90
+Puntaje: 50
+Puntaje: 10
+Puntaje: 80
+Puntaje: 70
+Puntaje: 10
+Puntaje: 30
+Puntaje: 10
+Puntaje: 10
+Puntaje: 0
+Puntaje: 50
+Puntaje: 10
+Puntaje: 30
+Puntaje: 0
