@@ -723,7 +723,7 @@ img_moneda = tk.PhotoImage(file="img/Bat_coin.png")# Murcielago amarillo de punt
 img_enemigo_rojo = tk.PhotoImage(file="img/Red_bat_enemy1.png") #Enemigo rojo
 img_enemigo_sombra = tk.PhotoImage(file="img/Shadow_enemy2.png") #Enemigo sombra
 img_escalera = tk.PhotoImage(file="img/Escalera_MH.png") #Escalera
-img_fondo_menu = tk.PhotoImage(file="img/menu_background.png")# Menu fondo
+img_fondo_menu = tk.PhotoImage(file="img/Menu_MH_back.png")# Menu fondo
 
 #Cargar música 
 py.mixer.init()
